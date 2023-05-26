@@ -57,27 +57,26 @@ def load_data(dataset="ITMS", config=None):
         data = h_d
     return data
 
-def dim_qtile(data, qtile):
-    dims = data["Dimension"].unique()
-    print("ALL DIMS: ", len(dims))
+def calc_dim_qtile(data, qtile):
+    unique_dims = data["Dimension"].unique()
+    # print("ALL DIMS: ", len(unique_dims))
     users = data["User"].unique()
     dims = []
     for u in users:
         user_data = data[data["User"]==u]
         dims.append(len(user_data["Dimension"].unique()))
         
-    # import plotly.express as px
-    # fig = px.histogram(dims)
-    # fig.show()
+    import plotly.express as px
+    fig = px.histogram(dims)
+    fig.show()
     
     dim_qtile = np.percentile(dims, qtile)
-    print("Max dim contributed: ", np.max(dims))
+    # print("Max dim contributed: ", np.max(dims))
     print("{}th percentile of dims contributed: ".format(qtile), dim_qtile)
     return dim_qtile
 
 def calc_min_k(data):
     dims = data["Dimension"].unique()
-    users = data["User"].unique()
     k_vals = []
     for d in dims:
         dim_data = data[data["Dimension"]==d]
@@ -126,10 +125,10 @@ def drop_dim_for_user(data, dim, user):
     """
     Drops the rows corresponding to the given dimension for the given user
     """
-    user_dims_before = len(data[data["User"]==user]["Dimension"].unique())
+    # user_dims_before = len(data[data["User"]==user]["Dimension"].unique())
     entries_to_drop = data[(data["Dimension"]==dim) & (data["User"]==user)]
-    new_data = data.drop(entries_to_drop.index)
-    user_dims_after = len(new_data[new_data["User"]==user]["Dimension"].unique())
+    new_data = data.drop(entries_to_drop.index, inplace=False)
+    # user_dims_after = len(new_data[new_data["User"]==user]["Dimension"].unique())
     # print("Before dropping: ", user_dims_before)
     # print("After dropping: ", user_dims_after)
     
