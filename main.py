@@ -14,26 +14,6 @@ if __name__ == "__main__":
     dataset = config["dataset"]
     data_non_iid = load_data(dataset, config["data"][dataset])
     data = data_non_iid
-    dims = data["Dimension"].unique()
-    users = data["User"].unique()
-    # for d in dims:
-    #     d_data = data[(data["Dimension"] == d) & (data["User"] == users[0])]
-    #     print(d_data)
-    dim_qtile = dim_qtile(data)
-    min_k = calc_min_k(data)
-    for u in users:
-        user_data = data[data["User"]==u]
-        num_user_dims = len(user_data["Dimension"].unique())
-        while num_user_dims > dim_qtile:
-            max_k_dim = get_max_k_dim(user_data, data)
-            print("For user {}, max k dim: {}".format(u, max_k_dim))
-            break
-            # k_post_drop = get_k_post_drop(data, max_k_dim, u)
-            # if k_post_drop < min_k:
-            #     dim_qtile = num_user_dims
-            # else:
-            #     num_user_dims -=1
-            #     data = drop_dim_for_user(data, max_k_dim, u)
     
     """
     Step 1: Calculate dim* qth ptile of num_dims contrib by a user
@@ -46,6 +26,27 @@ if __name__ == "__main__":
     Step 5: Run DAPaMean-MD for each dim
     """    
     
+    
+    dims = data["Dimension"].unique()
+    users = data["User"].unique()
+    # for d in dims:
+    #     d_data = data[(data["Dimension"] == d) & (data["User"] == users[0])]
+    #     print(d_data)
+    dim_qtile = dim_qtile(data, 90)
+    min_k = calc_min_k(data)
+    for u in users:
+        user_data = data[data["User"]==u]
+        num_user_dims = len(user_data["Dimension"].unique())
+        while num_user_dims > dim_qtile:
+            max_k_dim = get_max_k_dim(user_data, data)
+            k_post_drop = get_k_post_drop(data, max_k_dim, u)
+            if k_post_drop < min_k:
+                dim_qtile = num_user_dims
+            else:
+                num_user_dims -=1
+                data = drop_dim_for_user(data, max_k_dim, u)
+    print("Dim qtile after dropping dimensions: ", dim_qtile)
+    dim_qtile = dim_qtile(data, 100)
     # L = calc_user_array_length(data, type=config["user_group_size"])
     # print("L: ", L)
     # user_arrays, K = get_user_arrays(data, L, config["user_groupping"])

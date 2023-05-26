@@ -57,7 +57,7 @@ def load_data(dataset="ITMS", config=None):
         data = h_d
     return data
 
-def dim_qtile(data):
+def dim_qtile(data, qtile):
     dims = data["Dimension"].unique()
     print("ALL DIMS: ", len(dims))
     users = data["User"].unique()
@@ -70,9 +70,9 @@ def dim_qtile(data):
     # fig = px.histogram(dims)
     # fig.show()
     
-    dim_qtile = np.percentile(dims, 90)
+    dim_qtile = np.percentile(dims, qtile)
     print("Max dim contributed: ", np.max(dims))
-    print("90th percentile of dims contributed: ", dim_qtile)
+    print("{}th percentile of dims contributed: ".format(qtile), dim_qtile)
     return dim_qtile
 
 def calc_min_k(data):
@@ -95,6 +95,9 @@ def calc_min_k(data):
     return np.min(k_vals)
 
 def get_max_k_dim(user_data, data):
+    """
+    Gets the dimension with the maximum k value for the given user data
+    """
     user_dims = user_data["Dimension"].unique()
     max_user_k_val = -1
     max_k_val_dim = None
@@ -102,18 +105,36 @@ def get_max_k_dim(user_data, data):
         dim_data = data[data["Dimension"]==d]
         dim_l = calc_user_array_length(dim_data)
         dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
-        dim_k = np.floor(np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l)
+        dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
         if dim_k > max_user_k_val:
             max_user_k_val = dim_k
             max_k_val_dim = d
     return max_k_val_dim
 
 def get_k_post_drop(data, dim, user):
-    pass
+    """
+    Gets the k value for the given dimension after dropping the dimension for the given user
+    """
+    new_data = drop_dim_for_user(data, dim, user)
+    dim_data = new_data[new_data["Dimension"]==dim]
+    dim_l = calc_user_array_length(dim_data)
+    dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+    dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
+    return dim_k
 
 def drop_dim_for_user(data, dim, user):
-    pass
-
+    """
+    Drops the rows corresponding to the given dimension for the given user
+    """
+    user_dims_before = len(data[data["User"]==user]["Dimension"].unique())
+    entries_to_drop = data[(data["Dimension"]==dim) & (data["User"]==user)]
+    new_data = data.drop(entries_to_drop.index)
+    user_dims_after = len(new_data[new_data["User"]==user]["Dimension"].unique())
+    # print("Before dropping: ", user_dims_before)
+    # print("After dropping: ", user_dims_after)
+    
+    return new_data
+    
 def calc_user_array_length(data, type="median"):
     L = None
     data_grouped = data.groupby(["User"]).agg({"Value": "count"}).reset_index()
