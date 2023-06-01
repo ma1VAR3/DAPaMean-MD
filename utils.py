@@ -55,41 +55,119 @@ def load_data(dataset="ITMS", config=None):
             'HAT' : 'Dimension'
         })
         data = h_d
-    return data
+        
+        dims = data["Dimension"].unique()
+        users = data["User"].unique()
+        l_vals = []
+        k_vals = []
+        for d in dims:
+            dim_data = data[data["Dimension"]==d]
+            dim_l = calc_user_array_length(dim_data)
+            l_vals.append(dim_l)
+            dim_k = calc_k(dim_data, dim_l)
+            # dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+            # dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
+            k_vals.append(dim_k)
+        metadata_dict = {
+            "Dimension" : dims,
+            "L" : l_vals,
+            "K" : k_vals
+        }
+        metadata_df = pd.DataFrame(metadata_dict)
+        filtered_metadata_df = metadata_df[metadata_df["K"]>20]
+        filtered_dims = filtered_metadata_df["Dimension"].unique()
+        filtered_data = data[data["Dimension"].isin(filtered_dims)]
+        
+    return filtered_data, filtered_metadata_df
+
+def calc_k(data, l):
+    """
+    Takes data for one dimension and calculates corresponding k
+    """
+    data_grouped = data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+    k = np.sum([np.minimum(i, l) for i in data_grouped["Value"]]) / l
+    return k
 
 def calc_dim_qtile(data, qtile):
-    unique_dims = data["Dimension"].unique()
+    # unique_dims = data["Dimension"].unique()
     # print("ALL DIMS: ", len(unique_dims))
-    users = data["User"].unique()
-    dims = []
-    for u in users:
-        user_data = data[data["User"]==u]
-        dims.append(len(user_data["Dimension"].unique()))
+    data_gb_user = data.groupby(["User"]).agg({"Dimension": "nunique"}).reset_index()
+    dims = data_gb_user["Dimension"].values
+    # users = data["User"].unique()
+    # dims = []
+    # for u in users:
+    #     user_data = data[data["User"]==u]
+    #     dims.append(len(user_data["Dimension"].unique()))
         
-    import plotly.express as px
-    fig = px.histogram(dims)
-    fig.show()
+    # import plotly.express as px
+    # fig = px.histogram(dims)
+    # fig.show()
     
     dim_qtile = np.percentile(dims, qtile)
     # print("Max dim contributed: ", np.max(dims))
     print("{}th percentile of dims contributed: ".format(qtile), dim_qtile)
     return dim_qtile
 
-def calc_min_k(data):
-    dims = data["Dimension"].unique()
-    k_vals = []
-    for d in dims:
-        dim_data = data[data["Dimension"]==d]
-        dim_l = calc_user_array_length(dim_data)
-        dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
-        dim_k = np.floor(np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l)
-        k_vals.append(dim_k)
+def get_k_ordered_dims(user_data, metadata):
+    """
+    Get the k ordered dimensions for a user
+    """
+    user_dims = user_data["Dimension"].unique()
+    user_metadata = metadata[metadata["Dimension"].isin(user_dims)]
+    user_metadata = user_metadata.sort_values(by=["K"], ascending=False)
+    k_ordered_dims = user_metadata["Dimension"].values
+    return k_ordered_dims
+
+def calc_dim_qtile_dropping(data, metadata, users, support, qtile):
+    """
+    The two pass approach to calculate threhold for dropping dimensions
+    """
+    dim_qtile = calc_dim_qtile(data, qtile) # <- Initial threshold
+    for u in users:
+        user_data = data[data["User"]==u]
+        num_user_dims = len(user_data["Dimension"].unique())
+        flag = False # <- Flag to break out of loop of dropping dims
+        while num_user_dims > dim_qtile and not flag:
+            user_data = data[data["User"]==u] # <- Get user data again (since dims have been dropped)
+            k_ordered_dims = get_k_ordered_dims(user_data, metadata)
+            for s_dim in k_ordered_dims:
+                if metadata[metadata["Dimension"]==s_dim]["K"].values[0] < support:
+                    break
+                elif metadata[metadata["Dimension"]==s_dim]["K"].values[0]-1 < support:
+                    new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
+                    support_post_drop = calc_support(new_metadata)
+                    if support_post_drop >= support:
+                        num_user_dims -=1
+                        data = new_data
+                        metadata = new_metadata
+                        break
+                        # data, metadata = drop_dim_for_user(data, metadata, s_dim, u)
+                else:
+                    num_user_dims -=1
+                    data, metadata = drop_dim_for_user(data, metadata, s_dim, u)
+                    break
+                    
+    dim_qtile = calc_dim_qtile(data, 100) # <- Final threshold
+    return dim_qtile
+
+def calc_support(metadata):
+    
+    k_vals = metadata["K"].values
+    
+    # dims = data["Dimension"].unique()
+    # k_vals = []
+    # for d in dims:
+    #     dim_data = data[data["Dimension"]==d]
+    #     dim_l = calc_user_array_length(dim_data)
+    #     dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+    #     dim_k = np.floor(np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l)
+    #     k_vals.append(dim_k)
         
     # import plotly.express as px
     # fig = px.histogram(k_vals)
     # fig.show()
     
-    print("Min k: ", np.min(k_vals))
+    # print("Min k: ", np.min(k_vals))
     
     return np.min(k_vals)
 
@@ -110,7 +188,7 @@ def get_max_k_dim(user_data, data):
             max_k_val_dim = d
     return max_k_val_dim
 
-def get_k_post_drop(data, dim, user):
+def get_support_post_drop(data, dim, user):
     """
     Gets the k value for the given dimension after dropping the dimension for the given user
     """
@@ -121,19 +199,17 @@ def get_k_post_drop(data, dim, user):
     dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
     return dim_k
 
-def drop_dim_for_user(data, dim, user):
+def drop_dim_for_user(data, metadata, dim, user):
     """
     Drops the rows corresponding to the given dimension for the given user
     """
-    # user_dims_before = len(data[data["User"]==user]["Dimension"].unique())
+    
     entries_to_drop = data[(data["Dimension"]==dim) & (data["User"]==user)]
     new_data = data.drop(entries_to_drop.index, inplace=False)
-    # user_dims_after = len(new_data[new_data["User"]==user]["Dimension"].unique())
-    # print("Before dropping: ", user_dims_before)
-    # print("After dropping: ", user_dims_after)
-    
-    return new_data
-    
+    new_k_for_dim = calc_k(new_data[new_data["Dimension"]==dim], metadata[metadata["Dimension"]==dim]["L"].values[0])
+    metadata.loc[metadata["Dimension"]==dim, "K"] = new_k_for_dim
+    return new_data, metadata
+
 def calc_user_array_length(data, type="median"):
     L = None
     data_grouped = data.groupby(["User"]).agg({"Value": "count"}).reset_index()
@@ -147,3 +223,5 @@ def calc_user_array_length(data, type="median"):
         L = math.floor(math.sqrt(np.mean([math.pow(i, 2) for i in data_grouped["Value"]])))
     
     return L
+
+
