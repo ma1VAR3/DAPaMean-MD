@@ -45,6 +45,7 @@ if __name__ == "__main__":
     
     if config["concentration_algorithm"] == "quantiles":
         support = calc_support(metadata)
+        print("Support: ", support)
         dim_qtile = calc_dim_qtile_dropping(data, metadata, users, support, 90)
         for u in users:
             

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import h3
 
+
 def load_data(dataset="ITMS", config=None):
     data = None
         
@@ -77,6 +78,9 @@ def load_data(dataset="ITMS", config=None):
         filtered_metadata_df = metadata_df[metadata_df["K"]>20]
         filtered_dims = filtered_metadata_df["Dimension"].unique()
         filtered_data = data[data["Dimension"].isin(filtered_dims)]
+        
+        print("Original dims: ", len(metadata_df["Dimension"].unique()))
+        print("Filtered dims: ", len(filtered_metadata_df["Dimension"].unique()))
         
     return filtered_data, filtered_metadata_df
 
@@ -210,9 +214,28 @@ def drop_dim_for_user(data, metadata, dim, user):
     metadata.loc[metadata["Dimension"]==dim, "K"] = new_k_for_dim
     return new_data, metadata
 
-def calc_user_array_length(data, type="median"):
+def target_funtion(l, user_contribs):
+    """
+    The target function for the optimisation problem
+    """
+    k = np.sum([np.minimum(i, l) for i in user_contribs]) / l
+    return np.sqrt(l) * k
+
+def optimize_me(user_contribs, start, end, step=1):
+    f_val = float('-inf')
+    l_opt = start
+    for l in range(start, end, step):
+        val = target_funtion(l, user_contribs)
+        if val > f_val:
+            f_val = val
+            l_opt = l
+    return l_opt
+
+def calc_user_array_length(data, type="opt"):
     L = None
     data_grouped = data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+    user_contribs = data_grouped["Value"].values
+    
     if type=="median":
         L = math.floor(np.median(data_grouped["Value"]))
     elif type=="mean":
@@ -221,7 +244,10 @@ def calc_user_array_length(data, type="median"):
         L = np.max(data_grouped["Value"])
     elif type=="rms":
         L = math.floor(math.sqrt(np.mean([math.pow(i, 2) for i in data_grouped["Value"]])))
-    
+    elif type=="opt":
+        start = np.percentile(user_contribs, 10).astype(int)
+        end = np.percentile(user_contribs, 90).astype(int)
+        L = optimize_me(user_contribs, start, end, step=1)
     return L
 
 
