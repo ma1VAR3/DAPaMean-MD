@@ -1,4 +1,5 @@
 import json
+import os
 from utils import load_data
 
 if __name__ == "__main__":
@@ -10,5 +11,6 @@ if __name__ == "__main__":
         
     dataset = config["dataset"]
     data, metadata = load_data(dataset, config["data"][dataset])
+    os.makedirs("./data", exist_ok=True)
     data.to_csv("./data/filtered_data.csv", index=False)
     metadata.to_csv("./data/filtered_metadata.csv", index=False)
