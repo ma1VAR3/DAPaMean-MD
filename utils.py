@@ -75,7 +75,13 @@ def load_data(dataset="ITMS", config=None):
             "K" : k_vals
         }
         metadata_df = pd.DataFrame(metadata_dict)
-        filtered_metadata_df = metadata_df[metadata_df["K"]>20]
+        metadata_df["Sup"] = np.sqrt(metadata_df["L"]) * metadata_df["K"]
+        
+        # import plotly.express as px
+        # fig = px.histogram(metadata_df["Sup"].values, nbins=30)
+        # fig.show()
+        
+        filtered_metadata_df = metadata_df[metadata_df["Sup"]>=100]
         filtered_dims = filtered_metadata_df["Dimension"].unique()
         filtered_data = data[data["Dimension"].isin(filtered_dims)]
         
@@ -135,9 +141,9 @@ def calc_dim_qtile_dropping(data, metadata, users, support, qtile):
             user_data = data[data["User"]==u] # <- Get user data again (since dims have been dropped)
             k_ordered_dims = get_k_ordered_dims(user_data, metadata)
             for s_dim in k_ordered_dims:
-                if metadata[metadata["Dimension"]==s_dim]["K"].values[0] < support:
+                if metadata[metadata["Dimension"]==s_dim]["Sup"].values[0] < support:
                     break
-                elif metadata[metadata["Dimension"]==s_dim]["K"].values[0]-1 < support:
+                elif metadata[metadata["Dimension"]==s_dim]["Sup"].values[0]-1 < support:
                     new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
                     support_post_drop = calc_support(new_metadata)
                     if support_post_drop >= support:
@@ -156,7 +162,7 @@ def calc_dim_qtile_dropping(data, metadata, users, support, qtile):
 
 def calc_support(metadata):
     
-    k_vals = metadata["K"].values
+    sup_vals = metadata["Sup"].values
     
     # dims = data["Dimension"].unique()
     # k_vals = []
@@ -173,35 +179,35 @@ def calc_support(metadata):
     
     # print("Min k: ", np.min(k_vals))
     
-    return np.min(k_vals)
+    return np.min(sup_vals)
 
-def get_max_k_dim(user_data, data):
-    """
-    Gets the dimension with the maximum k value for the given user data
-    """
-    user_dims = user_data["Dimension"].unique()
-    max_user_k_val = -1
-    max_k_val_dim = None
-    for d in user_dims:
-        dim_data = data[data["Dimension"]==d]
-        dim_l = calc_user_array_length(dim_data)
-        dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
-        dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
-        if dim_k > max_user_k_val:
-            max_user_k_val = dim_k
-            max_k_val_dim = d
-    return max_k_val_dim
+# def get_max_k_dim(user_data, data):
+#     """
+#     Gets the dimension with the maximum k value for the given user data
+#     """
+#     user_dims = user_data["Dimension"].unique()
+#     max_user_k_val = -1
+#     max_k_val_dim = None
+#     for d in user_dims:
+#         dim_data = data[data["Dimension"]==d]
+#         dim_l = calc_user_array_length(dim_data)
+#         dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+#         dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
+#         if dim_k > max_user_k_val:
+#             max_user_k_val = dim_k
+#             max_k_val_dim = d
+#     return max_k_val_dim
 
-def get_support_post_drop(data, dim, user):
-    """
-    Gets the k value for the given dimension after dropping the dimension for the given user
-    """
-    new_data = drop_dim_for_user(data, dim, user)
-    dim_data = new_data[new_data["Dimension"]==dim]
-    dim_l = calc_user_array_length(dim_data)
-    dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
-    dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
-    return dim_k
+# def get_support_post_drop(data, dim, user):
+#     """
+#     Gets the k value for the given dimension after dropping the dimension for the given user
+#     """
+#     new_data = drop_dim_for_user(data, dim, user)
+#     dim_data = new_data[new_data["Dimension"]==dim]
+#     dim_l = calc_user_array_length(dim_data)
+#     dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
+#     dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
+#     return dim_k
 
 def drop_dim_for_user(data, metadata, dim, user):
     """
@@ -210,8 +216,15 @@ def drop_dim_for_user(data, metadata, dim, user):
     
     entries_to_drop = data[(data["Dimension"]==dim) & (data["User"]==user)]
     new_data = data.drop(entries_to_drop.index, inplace=False)
-    new_k_for_dim = calc_k(new_data[new_data["Dimension"]==dim], metadata[metadata["Dimension"]==dim]["L"].values[0])
+    new_k_for_dim = calc_k(
+        new_data[new_data["Dimension"]==dim], 
+        metadata[metadata["Dimension"]==dim]["L"].values[0]
+    )
     metadata.loc[metadata["Dimension"]==dim, "K"] = new_k_for_dim
+    metadata.loc[
+        metadata["Dimension"]==dim, 
+        "Sup"
+    ] = np.sqrt(metadata[metadata["Dimension"]==dim]["L"].values[0]) * new_k_for_dim
     return new_data, metadata
 
 def target_funtion(l, user_contribs):

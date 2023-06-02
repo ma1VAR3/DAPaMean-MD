@@ -1,8 +1,8 @@
 import json
 import os
 
-from utils import calc_dim_qtile, calc_dim_qtile_dropping, calc_support, get_max_k_dim
-from utils import get_k_ordered_dims, drop_dim_for_user, calc_user_array_length
+from utils import calc_dim_qtile, calc_dim_qtile_dropping, calc_support
+from utils import get_k_ordered_dims, drop_dim_for_user
 from groupping import get_user_arrays
 from estimation import private_estimation, baseline_estimation
 
@@ -34,9 +34,6 @@ if __name__ == "__main__":
         -> L can be mean/some percentile of number of samples
     """    
     
-    # TODO: Filter data (Take n hexagons with highest number of users) / (Filter based on k/ ~25 users)
-    # TODO: 2 step dim_qtile estimation -> Keep updating dim_qtile depending on the support
-    # TODO: Optimization with root(l)k -> max
     
     dims = data["Dimension"].unique()
     users = data["User"].unique() # <- List of users, used everywhere so that order is maintained
@@ -56,9 +53,9 @@ if __name__ == "__main__":
                 # max_k_dim = get_max_k_dim(user_data, data)
                 k_ordered_dims = get_k_ordered_dims(user_data, metadata)
                 for s_dim in k_ordered_dims:
-                    if metadata[metadata["Dimension"]==s_dim]["K"].values[0] < support:
+                    if metadata[metadata["Dimension"]==s_dim]["Sup"].values[0] < support:
                         break
-                    elif metadata[metadata["Dimension"]==s_dim]["K"].values[0]-1 < support:
+                    elif metadata[metadata["Dimension"]==s_dim]["Sup"].values[0]-1 < support:
                         new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
                         support_post_drop = calc_support(new_metadata)
                         if support_post_drop >= support:
@@ -89,52 +86,53 @@ if __name__ == "__main__":
         print("dim_qtile from pass 1: ", dim_qtile)
         print("dim_qtile from pass 2: ", dim_qtile_new)
     
-    # algo_err = []
-    # epsilons = config["epsilons"]
+    algo_err = []
+    epsilons = config["epsilons"]
     
-    # if config["concentration_algorithm"] == "baseline":
-    #     for e in epsilons:
-    #         e_prime = e / dim_qtile_base
-    #         exp_err = 0
-    #         for d in dims:
-    #             d_data = data[data["Dimension"]==d]
-    #             upper_bound = config["data"][dataset]["upper_bound"]
-    #             lower_bound = config["data"][dataset]["lower_bound"]
-    #             num_experiments = config["num_experiments"]
-    #             dim_rmse = baseline_estimation(d_data, upper_bound, lower_bound, e_prime, num_experiments)
-    #             exp_err += dim_rmse * dim_rmse
-    #         exp_err = np.sqrt(exp_err / len(dims))
-    #         algo_err.append(exp_err)
-    # else:
-    #     for e in epsilons:
-    #         if config["concentration_algorithm"] == "quantiles":
-    #             e_prime = e / dim_qtile
-    #         else:
-    #             e_prime = e / dim_qtile_base
-    #         exp_err = 0
-    #         for d in dims:
-    #             d_data = data[data["Dimension"]==d]
-    #             L = calc_user_array_length(d_data, type=config["user_group_size"])
-    #             user_arrays, K = get_user_arrays(d_data, L, config["user_groupping"])
-    #             actual_mean = np.mean(d_data["Value"].values)
-    #             user_group_means = [np.mean(x) for x in user_arrays]
-    #             dim_rmse = private_estimation(
-    #                 user_group_means,
-    #                 config["user_group_size"],
-    #                 K,
-    #                 config["data"][dataset]["upper_bound"],
-    #                 config["data"][dataset]["lower_bound"],
-    #                 e_prime,
-    #                 config["num_experiments"],
-    #                 actual_mean,
-    #                 config["user_groupping"],
-    #                 config["concentration_algorithm"],
-    #                 config["algorithm_parameters"][config["concentration_algorithm"]]
-    #             )
-    #             exp_err += dim_rmse * dim_rmse
-    #         exp_err = np.sqrt(exp_err / len(dims))
-    #         algo_err.append(exp_err)
-    
-    # os.makedirs('./new_res/' + config["concentration_algorithm"] + '/', exist_ok=True)
-    # np.save('./new_res/' + config["concentration_algorithm"] + '/' + 'losses.npy', algo_err)
+    if config["concentration_algorithm"] == "baseline":
+        for e in epsilons:
+            e_prime = e / dim_qtile_base
+            exp_err = 0
+            for d in dims:
+                d_data = data[data["Dimension"]==d]
+                upper_bound = config["data"][dataset]["upper_bound"]
+                lower_bound = config["data"][dataset]["lower_bound"]
+                num_experiments = config["num_experiments"]
+                dim_rmse = baseline_estimation(d_data, upper_bound, lower_bound, e_prime, num_experiments)
+                exp_err += dim_rmse * dim_rmse
+            exp_err = np.sqrt(exp_err / len(dims))
+            algo_err.append(exp_err)
+    else:
+        for e in epsilons:
+            if config["concentration_algorithm"] == "quantiles":
+                e_prime = e / dim_qtile
+            else:
+                e_prime = e / dim_qtile_base
+            exp_err = 0
+            for d in dims:
+                print(d)
+                d_data = data[data["Dimension"]==d]
+                L = metadata[metadata["Dimension"]==d]["L"].values[0]
+                user_arrays, K = get_user_arrays(d_data, L, config["user_groupping"])
+                actual_mean = np.mean(d_data["Value"].values)
+                user_group_means = [np.mean(x) for x in user_arrays]
+                dim_rmse = private_estimation(
+                    user_group_means,
+                    L,
+                    K,
+                    config["data"][dataset]["upper_bound"],
+                    config["data"][dataset]["lower_bound"],
+                    e_prime,
+                    config["num_experiments"],
+                    actual_mean,
+                    config["user_groupping"],
+                    config["concentration_algorithm"],
+                    config["algorithm_parameters"][config["concentration_algorithm"]]
+                )
+                exp_err += dim_rmse * dim_rmse
+            exp_err = np.sqrt(exp_err / len(dims))
+            algo_err.append(exp_err)
+    print("Exp errs: ", algo_err)
+    os.makedirs('./new_res/' + config["concentration_algorithm"] + '/', exist_ok=True)
+    np.save('./new_res/' + config["concentration_algorithm"] + '/' + 'losses.npy', algo_err)
     
