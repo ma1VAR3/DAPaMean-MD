@@ -2,7 +2,7 @@ import json
 import os
 
 from utils import calc_dim_qtile, calc_dim_qtile_dropping, calc_support
-from utils import get_k_ordered_dims, drop_dim_for_user
+
 from groupping import get_user_arrays
 from estimation import private_estimation, baseline_estimation
 
@@ -87,7 +87,8 @@ if __name__ == "__main__":
                 upper_bound = config["data"][dataset]["upper_bound"]
                 lower_bound = config["data"][dataset]["lower_bound"]
                 num_experiments = config["num_experiments"]
-                dim_rmse = baseline_estimation(d_data, upper_bound, lower_bound, e, num_experiments)
+                actual_mean = metadata[metadata["Dimension"]==d]["Actual Mean"].values[0]
+                dim_rmse = baseline_estimation(d_data, upper_bound, lower_bound, e, actual_mean, num_experiments)
                 exp_err += dim_rmse * dim_rmse
             exp_err = np.sqrt(exp_err / len(dims))
             algo_err.append(exp_err)
@@ -103,7 +104,7 @@ if __name__ == "__main__":
                 d_data = data[data["Dimension"]==d]
                 L = metadata[metadata["Dimension"]==d]["L"].values[0]
                 user_arrays, K = get_user_arrays(d_data, L, config["user_groupping"])
-                actual_mean = np.mean(d_data["Value"].values)
+                actual_mean = metadata[metadata["Dimension"]==d]["Actual Mean"].values[0]
                 user_group_means = [np.mean(x) for x in user_arrays]
                 dim_rmse = private_estimation(
                     user_group_means,

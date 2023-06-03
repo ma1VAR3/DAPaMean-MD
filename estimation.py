@@ -73,14 +73,14 @@ def private_estimation(user_group_means, L, K, ub, lb, epsilon, num_exp, actual_
         mean_of_projected_vals = np.mean(projected_vals, axis=1)
         noise_projected_vals = np.random.laplace(0, (3*tau*factor)/(K*(epsilon/2)), num_exp)
         final_estimates = mean_of_projected_vals + noise_projected_vals
-        
+        final_estimates = [ub if f > ub else lb if f < lb else f for f in final_estimates]
         # Calculating losses
         losses = np.abs(final_estimates - actual_mean)
-        np.save(file_base_tau + 'losses.npy', losses)
-        statistical_losses = np.abs(mean_of_projected_vals - actual_mean)
-        np.save(file_base_tau + 'statistical_losses.npy', statistical_losses)
-        random_losses = np.abs(noise_projected_vals)
-        np.save(file_base_tau + 'random_losses.npy', random_losses)
+        # np.save(file_base_tau + 'losses.npy', losses)
+        # statistical_losses = np.abs(mean_of_projected_vals - actual_mean)
+        # np.save(file_base_tau + 'statistical_losses.npy', statistical_losses)
+        # random_losses = np.abs(noise_projected_vals)
+        # np.save(file_base_tau + 'random_losses.npy', random_losses)
         
         return np.sqrt(np.mean(losses**2))
     
@@ -102,30 +102,34 @@ def private_estimation(user_group_means, L, K, ub, lb, epsilon, num_exp, actual_
         mean_of_projected_vals = np.mean(projected_vals, axis=1)
         noise_projected_vals = [np.random.laplace(0, ( ((q2[i]-q1[i])*factor) / (K * (epsilon/2))  )) for i in range(len(q1))]
         final_estimates = mean_of_projected_vals + noise_projected_vals
+        final_estimates = [ub if f > ub else lb if f < lb else f for f in final_estimates]
         losses = np.abs(final_estimates - actual_mean)
-        np.save(file_base_q + 'losses.npy', losses)
-        statistical_losses = np.abs(mean_of_projected_vals - actual_mean)
-        np.save(file_base_q + 'statistical_losses.npy', statistical_losses)
-        random_losses = np.abs(noise_projected_vals)
-        np.save(file_base_q + 'random_losses.npy', random_losses)
+        # np.save(file_base_q + 'losses.npy', losses)
+        # statistical_losses = np.abs(mean_of_projected_vals - actual_mean)
+        # np.save(file_base_q + 'statistical_losses.npy', statistical_losses)
+        # random_losses = np.abs(noise_projected_vals)
+        # np.save(file_base_q + 'random_losses.npy', random_losses)
         
         return np.sqrt(np.mean(losses**2))
             
             
     
-def baseline_estimation(data, ub, lb, e, num_exp):
+def baseline_estimation(data, ub, lb, e, actual_mean, num_exp):
     data_grouped = data.groupby(["User"]).agg({"Value":"count"}).reset_index()
     max_contrib = np.max(data_grouped["Value"])
     sum_contrib = np.sum(data_grouped["Value"])
-    print("Max contribution: ", max_contrib)
-    print("Sum of contributions: ", sum_contrib)
+    # print("Max contribution: ", max_contrib)
+    # print("Sum of contributions: ", sum_contrib)
     f_base = './results/baseline/epsilon_{}/'
     
     b = ((ub - lb) * max_contrib) / (sum_contrib * e)
     noise = np.random.laplace(0, b, num_exp)
+    final_estimates = actual_mean + noise
+    final_estimates = [ub if f > ub else lb if f < lb else f for f in final_estimates]
+    losses = np.abs(final_estimates - actual_mean)
     os.makedirs(f_base.format(e), exist_ok=True)
     np.save(f_base.format(e) + 'losses.npy', np.abs(noise))
     
-    return np.sqrt(np.mean(noise**2))
+    return np.sqrt(np.mean(losses**2))
 
     

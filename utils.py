@@ -61,6 +61,7 @@ def load_data(dataset="ITMS", config=None):
         users = data["User"].unique()
         l_vals = []
         k_vals = []
+        actual_mean_vals = []
         for d in dims:
             dim_data = data[data["Dimension"]==d]
             dim_l = calc_user_array_length(dim_data)
@@ -69,10 +70,14 @@ def load_data(dataset="ITMS", config=None):
             # dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
             # dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
             k_vals.append(dim_k)
+            dim_vals = dim_data["Value"].values
+            dim_actual_mean = np.mean(dim_vals)
+            actual_mean_vals.append(dim_actual_mean)
         metadata_dict = {
             "Dimension" : dims,
             "L" : l_vals,
-            "K" : k_vals
+            "K" : k_vals,
+            "Actual Mean" : actual_mean_vals
         }
         metadata_df = pd.DataFrame(metadata_dict)
         metadata_df["Sup"] = np.sqrt(metadata_df["L"]) * metadata_df["K"]
@@ -118,7 +123,7 @@ def calc_dim_qtile(data, qtile):
     print("{}th percentile of dims contributed: ".format(qtile), dim_qtile)
     return dim_qtile
 
-def get_k_ordered_dims(user_data, metadata):
+def get_sup_ordered_dims(user_data, metadata):
     """
     Get the k ordered dimensions for a user
     """
@@ -143,8 +148,8 @@ def calc_dim_qtile_dropping(data, metadata, users, support, qtile, pass_num):
         
         if num_user_dims > dim_qtile:
             user_data = data[data["User"]==u] # <- Get user data again (since dims have been dropped)
-            k_ordered_dims = get_k_ordered_dims(user_data, metadata)
-            for s_dim in k_ordered_dims:
+            sup_ordered_dims = get_sup_ordered_dims(user_data, metadata)
+            for s_dim in sup_ordered_dims:
                 if num_user_dims > dim_qtile:
                     new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
                     support_post_drop = calc_support(new_metadata)
