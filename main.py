@@ -43,71 +43,60 @@ if __name__ == "__main__":
     if config["concentration_algorithm"] == "quantiles":
         support = calc_support(metadata)
         print("Support: ", support)
-        dim_qtile = calc_dim_qtile_dropping(data, metadata, users, support, 90)
-        for u in users:
+        dim_qtile_pass1 = calc_dim_qtile_dropping(data, metadata, users, support, 90, 1)
+        dim_qtile, data, metadata = calc_dim_qtile_dropping(data, metadata, users, support, dim_qtile_pass1, 2)
+        print("dim_qtile from pass 1: ", dim_qtile_pass1)
+        print("dim_qtile from pass 2: ", dim_qtile)
+        # for u in users:
+        #     user_data = data[data["User"]==u]
+        #     num_user_dims = len(user_data["Dimension"].unique())
             
-            user_data = data[data["User"]==u]
-            num_user_dims = len(user_data["Dimension"].unique())
-            while num_user_dims > dim_qtile:
-                user_data = data[data["User"]==u]
-                # max_k_dim = get_max_k_dim(user_data, data)
-                k_ordered_dims = get_k_ordered_dims(user_data, metadata)
-                for s_dim in k_ordered_dims:
-                    if metadata[metadata["Dimension"]==s_dim]["Sup"].values[0] < support:
-                        break
-                    elif metadata[metadata["Dimension"]==s_dim]["Sup"].values[0]-1 < support:
-                        new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
-                        support_post_drop = calc_support(new_metadata)
-                        if support_post_drop >= support:
-                            num_user_dims -=1
-                            data = new_data
-                            metadata = new_metadata
-                            break
-                            # data, metadata = drop_dim_for_user(data, metadata, s_dim, u)
-                    else:
-                        num_user_dims -=1
-                        data, metadata = drop_dim_for_user(data, metadata, s_dim, u)
-                        break
-                # if metadata[max_k_dim]["K"] -1 < support:
-                #     support_post_drop = get_support_post_drop(data, max_k_dim, u)
-                #     if support_post_drop < support:
-                #         # dim_qtile = num_user_dims
-                #         break
-                #     else:
-                #         num_user_dims -=1
-                #         data, metadata = drop_dim_for_user(data, metadata, max_k_dim, u)
-                # else:
-                #     num_user_dims -=1
-                #     data, metadata = drop_dim_for_user(data, metadata, max_k_dim, u)
-        data.to_csv('./dropped_data.csv', index=False)
+        #     if num_user_dims > dim_qtile:
+        #         user_data = data[data["User"]==u]
+        #         k_ordered_dims = get_k_ordered_dims(user_data, metadata)
+        #         for s_dim in k_ordered_dims:
+        #             if num_user_dims > dim_qtile:
+        #                 new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
+        #                 support_post_drop = calc_support(new_metadata)
+        #                 if support_post_drop >= support:
+        #                     data = new_data
+        #                     metadata = new_metadata
+        #                     num_user_dims -= 1
+        #             else:
+        #                 break
+                    
+        #     user_data = data[data["User"]==u]
+        #     num_user_dims = len(user_data["Dimension"].unique())
+            
+        #     if num_user_dims > dim_qtile:
+        #         dim_qtile = num_user_dims
+        # data.to_csv('./dropped_data.csv', index=False)
         
             
-        dim_qtile_new = calc_dim_qtile(data, 100)
-        print("dim_qtile from pass 1: ", dim_qtile)
-        print("dim_qtile from pass 2: ", dim_qtile_new)
+        
     
     algo_err = []
     epsilons = config["epsilons"]
     
     if config["concentration_algorithm"] == "baseline":
         for e in epsilons:
-            e_prime = e / dim_qtile_base
+            # e_prime = e / dim_qtile_base
             exp_err = 0
             for d in dims:
                 d_data = data[data["Dimension"]==d]
                 upper_bound = config["data"][dataset]["upper_bound"]
                 lower_bound = config["data"][dataset]["lower_bound"]
                 num_experiments = config["num_experiments"]
-                dim_rmse = baseline_estimation(d_data, upper_bound, lower_bound, e_prime, num_experiments)
+                dim_rmse = baseline_estimation(d_data, upper_bound, lower_bound, e, num_experiments)
                 exp_err += dim_rmse * dim_rmse
             exp_err = np.sqrt(exp_err / len(dims))
             algo_err.append(exp_err)
     else:
         for e in epsilons:
-            if config["concentration_algorithm"] == "quantiles":
-                e_prime = e / dim_qtile
-            else:
-                e_prime = e / dim_qtile_base
+            # if config["concentration_algorithm"] == "quantiles":
+            #     e_prime = e / dim_qtile
+            # else:
+            #     e_prime = e / dim_qtile_base
             exp_err = 0
             for d in dims:
                 print(d)
@@ -122,7 +111,7 @@ if __name__ == "__main__":
                     K,
                     config["data"][dataset]["upper_bound"],
                     config["data"][dataset]["lower_bound"],
-                    e_prime,
+                    e,
                     config["num_experiments"],
                     actual_mean,
                     config["user_groupping"],

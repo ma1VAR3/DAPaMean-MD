@@ -124,41 +124,49 @@ def get_k_ordered_dims(user_data, metadata):
     """
     user_dims = user_data["Dimension"].unique()
     user_metadata = metadata[metadata["Dimension"].isin(user_dims)]
-    user_metadata = user_metadata.sort_values(by=["K"], ascending=False)
+    user_metadata = user_metadata.sort_values(by=["Sup"], ascending=False)
     k_ordered_dims = user_metadata["Dimension"].values
     return k_ordered_dims
 
-def calc_dim_qtile_dropping(data, metadata, users, support, qtile):
+def calc_dim_qtile_dropping(data, metadata, users, support, qtile, pass_num):
     """
     The two pass approach to calculate threhold for dropping dimensions
     """
-    dim_qtile = calc_dim_qtile(data, qtile) # <- Initial threshold
+    if pass_num == 1:
+        dim_qtile = calc_dim_qtile(data, qtile) # <- Initial threshold
+    else:
+        dim_qtile = qtile
+        
     for u in users:
         user_data = data[data["User"]==u]
         num_user_dims = len(user_data["Dimension"].unique())
-        flag = False # <- Flag to break out of loop of dropping dims
-        while num_user_dims > dim_qtile and not flag:
+        
+        if num_user_dims > dim_qtile:
             user_data = data[data["User"]==u] # <- Get user data again (since dims have been dropped)
             k_ordered_dims = get_k_ordered_dims(user_data, metadata)
             for s_dim in k_ordered_dims:
-                if metadata[metadata["Dimension"]==s_dim]["Sup"].values[0] < support:
-                    break
-                elif metadata[metadata["Dimension"]==s_dim]["Sup"].values[0]-1 < support:
+                if num_user_dims > dim_qtile:
                     new_data, new_metadata = drop_dim_for_user(data, metadata, s_dim, u)
                     support_post_drop = calc_support(new_metadata)
                     if support_post_drop >= support:
-                        num_user_dims -=1
                         data = new_data
                         metadata = new_metadata
-                        break
-                        # data, metadata = drop_dim_for_user(data, metadata, s_dim, u)
+                        num_user_dims -= 1
                 else:
-                    num_user_dims -=1
-                    data, metadata = drop_dim_for_user(data, metadata, s_dim, u)
                     break
-                    
+                
+        user_data = data[data["User"]==u]
+        num_user_dims = len(user_data["Dimension"].unique())
+        
+        if num_user_dims > dim_qtile:
+            dim_qtile = num_user_dims
+            
     dim_qtile = calc_dim_qtile(data, 100) # <- Final threshold
-    return dim_qtile
+    if pass_num == 1:
+        return dim_qtile
+    else:
+        data.to_csv('./dropped_data.csv', index=False)
+        return dim_qtile, data, metadata
 
 def calc_support(metadata):
     

@@ -10,12 +10,12 @@
         }
     },
     "contrib_qtile" : 0.9,
-    "epsilons" : [4, 5, 8, 10],
+    "epsilons" : [0.1, 0.2, 0.4, 0.6, 1],
     "num_experiments" : 500000,
     "error_percentiles" : [95, 98, 99],
     "user_group_size" : "median",
     "user_groupping" : "best_fit",
-    "concentration_algorithm" : "baseline",
+    "concentration_algorithm" : "quantiles",
     "algorithm_parameters" : {
         "coarse_mean" : {
             "tau" : -1,
