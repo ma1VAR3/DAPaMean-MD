@@ -100,7 +100,7 @@ if __name__ == "__main__":
             #     e_prime = e / dim_qtile_base
             exp_err = 0
             for d in dims:
-                print(d)
+                # print(d)
                 d_data = data[data["Dimension"]==d]
                 L = metadata[metadata["Dimension"]==d]["L"].values[0]
                 user_arrays, K = get_user_arrays(d_data, L, config["user_groupping"])
