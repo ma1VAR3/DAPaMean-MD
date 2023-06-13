@@ -49,6 +49,22 @@ def load_data(dataset="ITMS", config=None):
         df = df[(df["Timeslot"] >= startTime) & (df["Timeslot"] <= endTime)]
         df = df[df["speed"] > 0]
         h_d = df
+        # max_user_filtering_df = (
+        #     h_d.groupby(["h3index"]).agg({"license_plate": "nunique"}).reset_index()
+        # )
+        # max_user_hexagon_sort = max_user_filtering_df.sort_values(
+        #     by=["license_plate"], ascending=False
+        # )
+        # max_user_hexagon = max_user_hexagon_sort["h3index"].iloc[0]
+        # print(max_user_hexagon)
+        # h_d = h_d[h_d["h3index"] == max_user_hexagon]
+        num_user_filtering_df = (
+            h_d.groupby(["HAT"]).agg({"license_plate": "nunique"}).reset_index()
+        )
+        num_user_filtering_df = num_user_filtering_df[
+            num_user_filtering_df["license_plate"] >= 100
+        ]
+        h_d = h_d[h_d["HAT"].isin(num_user_filtering_df["HAT"].values)]
         h_d = h_d.drop(
             columns=[
                 "observationDateTime",
@@ -59,6 +75,7 @@ def load_data(dataset="ITMS", config=None):
                 "Timeslot",
             ]
         )
+
         h_d = h_d.rename(
             columns={"license_plate": "User", "speed": "Value", "HAT": "Dimension"}
         )
@@ -93,14 +110,15 @@ def load_data(dataset="ITMS", config=None):
         # fig = px.histogram(metadata_df["Sup"].values, nbins=30)
         # fig.show()
 
-        filtered_metadata_df = metadata_df[metadata_df["Sup"] >= 100]
-        filtered_dims = filtered_metadata_df["Dimension"].unique()
-        filtered_data = data[data["Dimension"].isin(filtered_dims)]
+        # filtered_metadata_df = metadata_df[metadata_df["Sup"] >= 800]
+        # filtered_dims = filtered_metadata_df["Dimension"].unique()
+        # filtered_data = data[data["Dimension"].isin(filtered_dims)]
 
-        print("Original dims: ", len(metadata_df["Dimension"].unique()))
-        print("Filtered dims: ", len(filtered_metadata_df["Dimension"].unique()))
+        print("Remaining dims: ", len(metadata_df["Dimension"].unique()))
+        # print("Filtered dims: ", len(filtered_metadata_df["Dimension"].unique()))
 
-    return filtered_data, filtered_metadata_df
+    # return filtered_data, filtered_metadata_df
+    return data, metadata_df
 
 
 def calc_k(data, l):

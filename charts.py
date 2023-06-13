@@ -163,7 +163,7 @@ for e in epsilons:
         store_array.append(overall_rmse)
 
     for loaded_loss, store_array in zip(loaded_set, store_set_worst):
-        exp_perc = np.percentile(loaded_loss, 100, axis=0)
+        exp_perc = np.percentile(loaded_loss, 95, axis=0)
         mean_perc = np.mean(exp_perc)
         store_array.append(mean_perc)
 

@@ -80,8 +80,6 @@ def private_estimation(
         tau = config["tau"]
         delta = config["delta"]
         # for tau in taus:
-        file_base_tau = file_base + "tau_" + str(tau) + "/"
-        os.makedirs(file_base_tau, exist_ok=True)
         # Quantizing means
         if tau == -1:
             tau = ((ub - lb) / 2) * (math.sqrt((2 / L) * (math.log((2 * K) / delta))))
