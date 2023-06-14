@@ -2,6 +2,8 @@
     "dataset" : "ITMS", 
     "data" : {
         "ITMS" : {
+            "Synthetic" : false,
+            "Synthetic Factor" : 10,
             "H3 Resolution" : 6,
             "lower_bound" : 0,
             "upper_bound" : 65,
@@ -10,12 +12,13 @@
         }
     },
     "contrib_qtile" : 0.9,
-    "epsilons" : [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4 ,2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.8, 4],
+    "epsilons" : [1, 2, 3, 4],
     "num_experiments" : 500000,
     "error_percentiles" : [95, 98, 99],
     "user_group_size" : "median",
-    "user_groupping" : "wrap",
-    "concentration_algorithm" : "coarse_mean",
+    "user_groupping" : "best_fit",
+    "concentration_algorithm" : "baseline2",
+    "drop_dims" : true,
     "algorithm_parameters" : {
         "coarse_mean" : {
             "tau" : -1,
@@ -23,6 +26,9 @@
         },
         "quantiles" : {
             "lower_quantile" : 0.1
+        },
+        "baseline2" : {
+            "NA" : "NA"
         }
     }
 }

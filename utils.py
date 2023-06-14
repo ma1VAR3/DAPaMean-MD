@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 import h3
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 def load_data(dataset="ITMS", config=None):
     data = None
-
-    if dataset == "ITMS":
+    metadata_df = None
+    if dataset == "ITMS" and config["Synthetic"] == False:
         df = pd.read_csv("./suratITMSDPtest/suratITMSDPtest.csv")
         df = df.drop_duplicates(
             subset=["trip_id", "observationDateTime"], ignore_index=True
@@ -62,7 +63,7 @@ def load_data(dataset="ITMS", config=None):
             h_d.groupby(["HAT"]).agg({"license_plate": "nunique"}).reset_index()
         )
         num_user_filtering_df = num_user_filtering_df[
-            num_user_filtering_df["license_plate"] >= 100
+            num_user_filtering_df["license_plate"] >= 150
         ]
         h_d = h_d[h_d["HAT"].isin(num_user_filtering_df["HAT"].values)]
         h_d = h_d.drop(
@@ -117,8 +118,128 @@ def load_data(dataset="ITMS", config=None):
         print("Remaining dims: ", len(metadata_df["Dimension"].unique()))
         # print("Filtered dims: ", len(filtered_metadata_df["Dimension"].unique()))
 
+    if dataset == "ITMS" and config["Synthetic"] == True:
+        df = pd.read_csv("./suratITMSDPtest/suratITMSDPtest.csv")
+        df = df.drop_duplicates(
+            subset=["trip_id", "observationDateTime"], ignore_index=True
+        )
+        df = df.drop(
+            columns=[
+                "trip_direction",
+                "last_stop_id",
+                "last_stop_arrival_time",
+                "route_id",
+                "actual_trip_start_time",
+                "trip_delay",
+                "vehicle_label",
+                "id",
+                "location.type",
+                "trip_id",
+            ]
+        )
+        lat_lon = df["location.coordinates"].astype(str).str.strip("[]").str.split(",")
+        lon = lat_lon.apply(lambda x: x[0])
+        lat = lat_lon.apply(lambda x: x[1])
+        dflen = len(df)
+        h3index = [None] * dflen
+        resolution = config["H3 Resolution"]
+        for i in range(dflen):
+            h3index[i] = h3.geo_to_h3(
+                lat=float(lat[i]), lng=float(lon[i]), resolution=resolution
+            )
+        df["h3index"] = h3index
+        df["Date"] = pd.to_datetime(df["observationDateTime"]).dt.date
+        df["Time"] = pd.to_datetime(df["observationDateTime"]).dt.time
+        time = df["Time"]
+        df["Timeslot"] = time.apply(lambda x: x.hour)
+        df["HAT"] = df["Timeslot"].astype(str) + " " + df["h3index"]
+        startTime = config["Start time"]
+        endTime = config["End time"]
+        df = df[(df["Timeslot"] >= startTime) & (df["Timeslot"] <= endTime)]
+        df = df[df["speed"] > 0]
+
+        df = df.drop(
+            columns=[
+                "observationDateTime",
+                "location.coordinates",
+                "h3index",
+                "Date",
+                "Time",
+                "Timeslot",
+            ]
+        )
+
+        df = df.rename(
+            columns={"license_plate": "User", "speed": "Value", "HAT": "Dimension"}
+        )
+        num_user_filtering_df = (
+            df.groupby(["Dimension"]).agg({"User": "nunique"}).reset_index()
+        )
+        num_user_filtering_df = num_user_filtering_df[
+            num_user_filtering_df["User"] >= 150
+        ]
+        df = df[df["Dimension"].isin(num_user_filtering_df["Dimension"].values)]
+        data = synthesize_perdim_peruser(df, config)
+        dims = data["Dimension"].unique()
+        users = data["User"].unique()
+        l_vals = []
+        k_vals = []
+        actual_mean_vals = []
+        for d in dims:
+            dim_data = data[data["Dimension"] == d]
+            dim_l = calc_user_array_length(dim_data)
+            l_vals.append(dim_l)
+            dim_k = calc_k(dim_data, dim_l)
+            k_vals.append(dim_k)
+            dim_vals = dim_data["Value"].values
+            dim_actual_mean = np.mean(dim_vals)
+            actual_mean_vals.append(dim_actual_mean)
+        metadata_dict = {
+            "Dimension": dims,
+            "L": l_vals,
+            "K": k_vals,
+            "Actual Mean": actual_mean_vals,
+        }
+        metadata_df = pd.DataFrame(metadata_dict)
+        metadata_df["Sup"] = np.sqrt(metadata_df["L"]) * metadata_df["K"]
     # return filtered_data, filtered_metadata_df
     return data, metadata_df
+
+
+def synthesize_perdim_peruser(data, config):
+    dimenstion_arr = []
+    user_arr = []
+    value_arr = []
+    bins = np.arange(config["lower_bound"], config["upper_bound"] + 1, 1)
+    dims = data["Dimension"].unique()
+    for prog, d in zip(tqdm(range(len(dims))), dims):
+        # for d in dims:
+        dim_data = data[data["Dimension"] == d]
+        dim_users = dim_data["User"].unique()
+        for u in dim_users:
+            dim_user_data = dim_data[dim_data["User"] == u]
+            num_user_samples = len(dim_user_data) * config["Synthetic Factor"]
+            user_dim_samples = dim_user_data["Value"].values
+            user_new_samples = []
+            hist = np.histogram(user_dim_samples, bins=bins)
+            bin_probs = hist[0] / np.sum(hist[0])
+            for x in range(num_user_samples):
+                rand_bin = np.random.choice(bins[:-1], p=bin_probs)
+                rand_sample = np.random.uniform(rand_bin, rand_bin + 1)
+                dimenstion_arr.append(d)
+                user_arr.append(u)
+                value_arr.append(rand_sample)
+                user_new_samples.append(rand_sample)
+            # plt.hist(user_dim_samples, bins=bins, density=True)
+            # plt.show()
+            # plt.hist(user_new_samples, bins=bins, density=True)
+            # plt.show()
+
+    syn_data = pd.DataFrame(
+        {"Dimension": dimenstion_arr, "User": user_arr, "Value": value_arr}
+    )
+
+    return syn_data
 
 
 def calc_k(data, l):
