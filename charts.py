@@ -30,7 +30,7 @@ def get_figure(
         "circle-open",
         "x-open",
     ]
-    mp_maks = ["o", "^", "s", "*"]
+    mp_maks = ["o", "^", "s", "*", "x", "P"]
     line_styles = [
         "-",
         "-.",
@@ -128,57 +128,89 @@ factor1 = 63
 factor2 = 40
 
 losses_base_rmse = []
+losses_base2_rmse = []
 losses_cm_rmse = []
+losses_cm_bf_rmse = []
 losses_q_wrap_rmse = []
 losses_q_best_rmse = []
 
 losses_base_worst = []
+losses_base2_worst = []
 losses_cm_worst = []
+losses_cm_bf_worst = []
 losses_q_wrap_worst = []
 losses_q_best_worst = []
 
 for e in epsilons:
     losses_base_e = np.load(file_path_base.format("baseline", "wrap", str(e)))
+    losses_base2_e = np.load(file_path_base.format("baseline2", "best_fit", str(e)))
     losses_cm_e = np.load(file_path_base.format("coarse_mean", "wrap", str(e)))
+    losses_cm_bf_e = np.load(file_path_base.format("coarse_mean", "best_fit", str(e)))
     losses_q_wrap_e = np.load(file_path_base.format("quantiles", "wrap", str(e)))
     losses_q_best_e = np.load(file_path_base.format("quantiles", "best_fit", str(e)))
 
-    loaded_set = [losses_base_e, losses_cm_e, losses_q_wrap_e, losses_q_best_e]
+    loaded_set = [
+        losses_base_e,
+        losses_base2_e,
+        losses_cm_e,
+        losses_cm_bf_e,
+        losses_q_wrap_e,
+        losses_q_best_e,
+    ]
     store_set_rmse = [
         losses_base_rmse,
+        losses_base2_rmse,
         losses_cm_rmse,
+        losses_cm_bf_rmse,
         losses_q_wrap_rmse,
         losses_q_best_rmse,
     ]
     store_set_worst = [
         losses_base_worst,
+        losses_base2_worst,
         losses_cm_worst,
+        losses_cm_bf_worst,
         losses_q_wrap_worst,
         losses_q_best_worst,
     ]
 
     for loaded_loss, store_array in zip(loaded_set, store_set_rmse):
         dim_rmses = np.sqrt(np.mean(loaded_loss**2, axis=1))
-        overall_rmse = np.sqrt(np.mean(dim_rmses))
+        overall_rmse = np.sqrt(np.mean(dim_rmses**2))
         store_array.append(overall_rmse)
 
     for loaded_loss, store_array in zip(loaded_set, store_set_worst):
-        exp_perc = np.percentile(loaded_loss, 95, axis=0)
+        exp_perc = np.percentile(loaded_loss, 100, axis=0)
         mean_perc = np.mean(exp_perc)
         store_array.append(mean_perc)
 
-print(losses_base_worst)
-print(losses_cm_worst)
-print(losses_q_wrap_worst)
-print(losses_q_best_worst)
+print(losses_base_rmse)
+print(losses_cm_rmse)
+print(losses_cm_bf_rmse)
+print(losses_q_wrap_rmse)
+print(losses_q_best_rmse)
 
 fig = get_figure(
     epsilons,
     "Epsilon per dimension",
-    [losses_base_rmse, losses_cm_rmse, losses_q_wrap_rmse, losses_q_best_rmse],
+    [
+        losses_base_rmse,
+        losses_base2_rmse,
+        losses_cm_rmse,
+        losses_cm_bf_rmse,
+        losses_q_wrap_rmse,
+        losses_q_best_rmse,
+    ],
     "Error",
     "Error vs Epsilon per Dimension",
-    ["Baseline", "Levy", "DAPaMean-MD wrap", "DAPaMean-MD best"],
+    [
+        "Baseline",
+        "Baseline2",
+        "Levy + wrap",
+        "Levy + best",
+        "DAPaMean-MD wrap",
+        "DAPaMean-MD best",
+    ],
     legend_prefix="",
 )
 
@@ -187,10 +219,24 @@ fig.show()
 fig = get_figure(
     epsilons,
     "Epsilon per dimension",
-    [losses_base_worst, losses_cm_worst, losses_q_wrap_worst, losses_q_best_worst],
+    [
+        losses_base_worst,
+        losses_base2_worst,
+        losses_cm_worst,
+        losses_cm_bf_worst,
+        losses_q_wrap_worst,
+        losses_q_best_worst,
+    ],
     "Error",
     "Error vs Epsilon per Dimension",
-    ["Baseline", "Levy", "DAPaMean-MD wrap", "DAPaMean-MD best"],
+    [
+        "Baseline",
+        "Baseline2",
+        "Levy + wrap",
+        "Levy + best",
+        "DAPaMean-MD wrap",
+        "DAPaMean-MD best",
+    ],
     legend_prefix="",
 )
 

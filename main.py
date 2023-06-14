@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     dim_qtile_base = calc_dim_qtile(data, 100)
 
-    if config["concentration_algorithm"] == "quantiles":
+    if config["drop_dims"] == True:
         support = calc_support(metadata)
         print("Support: ", support)
         dim_qtile_pass1 = calc_dim_qtile_dropping(data, metadata, users, support, 90, 1)
