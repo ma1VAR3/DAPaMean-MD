@@ -161,6 +161,15 @@ def private_estimation(
 
         return losses
 
+    if conc_algo == "baseline2":
+        factor = 2 if groupping_algo == "wrap" else 1
+        coarse_mean = np.mean(user_group_means)
+        noise_baseline2 = np.random.laplace(0, ((ub - lb) / (K * epsilon)), num_exp)
+        final_estimates = coarse_mean + noise_baseline2
+        final_estimates = np.clip(final_estimates, lb, ub)
+        losses = np.abs(final_estimates - actual_mean)
+        return losses
+
 
 def baseline_estimation(data, ub, lb, e, actual_mean, num_exp):
     data_grouped = data.groupby(["User"]).agg({"Value": "count"}).reset_index()
