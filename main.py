@@ -20,8 +20,8 @@ if __name__ == "__main__":
         jsonfile.close()
 
     dataset = config["dataset"]
-    data = pd.read_csv("./data/filtered_data.csv")
-    metadata = pd.read_csv("./data/filtered_metadata.csv")
+    data = pd.read_csv("./data/synthetic_data.csv")
+    metadata = pd.read_csv("./data/synthetic_metadata.csv")
 
     dims = data["Dimension"].unique()
     users = data[
