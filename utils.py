@@ -207,7 +207,7 @@ def load_data(dataset="ITMS", config=None):
 
 
 def synthesize_perdim_peruser(data, config):
-    dimenstion_arr = []
+    dimension_arr = []
     user_arr = []
     value_arr = []
     bins = np.arange(config["lower_bound"], config["upper_bound"] + 1, 1)
@@ -226,7 +226,7 @@ def synthesize_perdim_peruser(data, config):
             for x in range(num_user_samples):
                 rand_bin = np.random.choice(bins[:-1], p=bin_probs)
                 rand_sample = np.random.uniform(rand_bin, rand_bin + 1)
-                dimenstion_arr.append(d)
+                dimension_arr.append(d)
                 user_arr.append(u)
                 value_arr.append(rand_sample)
                 user_new_samples.append(rand_sample)
@@ -236,9 +236,30 @@ def synthesize_perdim_peruser(data, config):
             # plt.show()
 
     syn_data = pd.DataFrame(
-        {"Dimension": dimenstion_arr, "User": user_arr, "Value": value_arr}
+        {"Dimension": dimension_arr, "User": user_arr, "Value": value_arr}
     )
 
+    return syn_data
+
+def synthesize_perdim(data, config):
+    dimension_arr = []
+    value_arr = []
+    dims = data["Dimension"].unique()
+    for prog, d in zip(tqdm(range(len(dims))), dims):
+        dim_data = data[data["Dimension"] == d]
+        num_samples = len(dim_data) * config["Synthetic Factor"]
+        dim_samples = dim_data["Value"].values
+        mean = np.mean(dim_samples)
+        std = np.std(dim_samples)
+        new_samples = np.random.normal(mean, std, size=num_samples)
+        dimension_arr.extend([d] * num_samples)
+        value_arr.extend(new_samples)
+        # plt.hist(dim_samples, bins=bins, density=True)
+        # plt.show()
+        # plt.hist(new_samples, bins=bins, density=True)
+        # plt.show()
+
+    syn_data = pd.DataFrame({"Dimension": dimension_arr, "Value": value_arr})
     return syn_data
 
 
