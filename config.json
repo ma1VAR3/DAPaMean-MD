@@ -2,7 +2,8 @@
     "dataset" : "ITMS", 
     "data" : {
         "ITMS" : {
-            "Synthetic" : false,
+            "Synthetic" : true,
+            "Synthetic Scaling" : "users",
             "Synthetic Factor" : 10,
             "H3 Resolution" : 6,
             "lower_bound" : 0,
@@ -17,7 +18,7 @@
     "error_percentiles" : [95, 98, 99],
     "user_group_size" : "median",
     "user_groupping" : "best_fit",
-    "concentration_algorithm" : "quantiles",
+    "concentration_algorithm" : "baseline2",
     "drop_dims" : true,
     "algorithm_parameters" : {
         "coarse_mean" : {

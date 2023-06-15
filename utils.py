@@ -179,7 +179,14 @@ def load_data(dataset="ITMS", config=None):
             num_user_filtering_df["User"] >= 150
         ]
         df = df[df["Dimension"].isin(num_user_filtering_df["Dimension"].values)]
-        data = synthesize_perdim_peruser(df, config)
+        data = None
+        if config["Synthetic Scaling"] == "samples":
+            data = synthesize_perdim_peruser(df, config)
+        elif config["Synthetic Scaling"] == "users":
+            data = synthesize_perdim(df, config)
+        else:
+            print("Invalid scaling type")
+            return
         dims = data["Dimension"].unique()
         users = data["User"].unique()
         l_vals = []
@@ -241,25 +248,36 @@ def synthesize_perdim_peruser(data, config):
 
     return syn_data
 
+
 def synthesize_perdim(data, config):
     dimension_arr = []
+    user_arr = []
     value_arr = []
     dims = data["Dimension"].unique()
     for prog, d in zip(tqdm(range(len(dims))), dims):
         dim_data = data[data["Dimension"] == d]
-        num_samples = len(dim_data) * config["Synthetic Factor"]
         dim_samples = dim_data["Value"].values
         mean = np.mean(dim_samples)
         std = np.std(dim_samples)
-        new_samples = np.random.normal(mean, std, size=num_samples)
-        dimension_arr.extend([d] * num_samples)
-        value_arr.extend(new_samples)
+        dim_users = dim_data["User"].unique()
+        for u in dim_users:
+            num_user_samples_in_dim = len(
+                dim_data[dim_data["User"] == u]["Value"].values
+            )
+            for x in range(1, config["Synthetic Factor"] + 1):
+                new_uid = u + "_" + str(x)
+                new_user_samples = np.random.normal(mean, std, num_user_samples_in_dim)
+                dimension_arr.extend([d] * num_user_samples_in_dim)
+                user_arr.extend([new_uid] * num_user_samples_in_dim)
+                value_arr.extend(new_user_samples)
         # plt.hist(dim_samples, bins=bins, density=True)
         # plt.show()
         # plt.hist(new_samples, bins=bins, density=True)
         # plt.show()
 
-    syn_data = pd.DataFrame({"Dimension": dimension_arr, "Value": value_arr})
+    syn_data = pd.DataFrame(
+        {"Dimension": dimension_arr, "User": user_arr, "Value": value_arr}
+    )
     return syn_data
 
 

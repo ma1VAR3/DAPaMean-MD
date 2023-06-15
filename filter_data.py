@@ -16,5 +16,5 @@ if __name__ == "__main__":
         data.to_csv("./data/filtered_data.csv", index=False)
         metadata.to_csv("./data/filtered_metadata.csv", index=False)
     else:
-        data.to_csv("./data/synthetic_data.csv", index=False)
-        metadata.to_csv("./data/synthetic_metadata.csv", index=False)
+        data.to_csv("./data/synthetic2_data.csv", index=False)
+        metadata.to_csv("./data/synthetic2_metadata.csv", index=False)
