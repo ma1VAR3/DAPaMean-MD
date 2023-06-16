@@ -19,9 +19,16 @@ if __name__ == "__main__":
         print("Configurations loaded from config.json")
         jsonfile.close()
 
+    data = None
+    metadata = None
     dataset = config["dataset"]
-    data = pd.read_csv("./data/synthetic_data.csv")
-    metadata = pd.read_csv("./data/synthetic_metadata.csv")
+
+    if os.path.exists("./data/dropped_data.csv"):
+        data = pd.read_csv("./data/dropped_data.csv")
+        metadata = pd.read_csv("./data/dropped_metadata.csv")
+    else:
+        data = pd.read_csv("./data/synthetic2_data.csv")
+        metadata = pd.read_csv("./data/synthetic2_metadata.csv")
 
     dims = data["Dimension"].unique()
     users = data[
@@ -30,7 +37,7 @@ if __name__ == "__main__":
 
     dim_qtile_base = calc_dim_qtile(data, 100)
 
-    if config["drop_dims"] == True:
+    if config["drop_dims"] == True and not os.path.exists("./data/dropped_data.csv"):
         support = calc_support(metadata)
         print("Support: ", support)
         dim_qtile_pass1 = calc_dim_qtile_dropping(data, metadata, users, support, 90, 1)
@@ -39,9 +46,10 @@ if __name__ == "__main__":
         )
         print("dim_qtile from pass 1: ", dim_qtile_pass1)
         print("dim_qtile from pass 2: ", dim_qtile)
+        data.to_csv("./data/dropped_data.csv")
+        metadata.to_csv("./data/dropped_metadata.csv")
 
     epsilons = config["epsilons"]
-
     print("Starting experiments")
 
     if config["concentration_algorithm"] == "baseline":
@@ -97,7 +105,51 @@ if __name__ == "__main__":
             for prog, d in zip(tqdm(range(len(dims))), dims):
                 d_data = data[data["Dimension"] == d]
                 L = metadata[metadata["Dimension"] == d]["L"].values[0]
-                user_arrays, K = get_user_arrays(d_data, L, config["user_groupping"])
+                if not os.path.exists(
+                    "./groupped_arrays/" + config["user_groupping"] + "/" + d + ".npy"
+                ):
+                    user_arrays, K = get_user_arrays(
+                        d_data, L, config["user_groupping"]
+                    )
+                    os.makedirs(
+                        "./groupped_arrays/" + config["user_groupping"] + "/",
+                        exist_ok=True,
+                    )
+                    np.save(
+                        "./groupped_arrays/"
+                        + config["user_groupping"]
+                        + "/"
+                        + d
+                        + ".npy",
+                        np.array(user_arrays, dtype=object),
+                        allow_pickle=True,
+                    )
+                    np.save(
+                        "./groupped_arrays/"
+                        + config["user_groupping"]
+                        + "/"
+                        + d
+                        + "_k"
+                        + ".npy",
+                        np.array(K),
+                    )
+                else:
+                    user_arrays = np.load(
+                        "./groupped_arrays/"
+                        + config["user_groupping"]
+                        + "/"
+                        + d
+                        + ".npy",
+                        allow_pickle=True,
+                    )
+                    K = np.load(
+                        "./groupped_arrays/"
+                        + config["user_groupping"]
+                        + "/"
+                        + d
+                        + "_k"
+                        + ".npy"
+                    )
                 actual_mean = metadata[metadata["Dimension"] == d][
                     "Actual Mean"
                 ].values[0]
