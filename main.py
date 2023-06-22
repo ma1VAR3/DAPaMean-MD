@@ -27,8 +27,8 @@ if __name__ == "__main__":
         data = pd.read_csv("./data/dropped_data.csv")
         metadata = pd.read_csv("./data/dropped_metadata.csv")
     else:
-        data = pd.read_csv("./data/synthetic2_data.csv")
-        metadata = pd.read_csv("./data/synthetic2_metadata.csv")
+        data = pd.read_csv("./data/filtered_data.csv")
+        metadata = pd.read_csv("./data/filtered_metadata.csv")
 
     dims = data["Dimension"].unique()
     users = data[

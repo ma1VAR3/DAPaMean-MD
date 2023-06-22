@@ -121,7 +121,7 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results/{}/{}/{}/losses.npy"
+file_path_base = "./results syn num samp scaling 4 eps/{}/{}/{}/losses.npy"
 conc_algos = ["baseline", "coarse_mean", "quantiles"]
 epsilons = config["epsilons"]
 factor1 = 63
@@ -205,7 +205,7 @@ fig = get_figure(
     "Error vs Epsilon per Dimension",
     [
         "Baseline",
-        "Baseline2",
+        "AAA + best",
         "Levy + wrap",
         "Levy + best",
         "DAPaMean-MD wrap",
@@ -231,7 +231,7 @@ fig = get_figure(
     "Error vs Epsilon per Dimension",
     [
         "Baseline",
-        "Baseline2",
+        "AAA + best",
         "Levy + wrap",
         "Levy + best",
         "DAPaMean-MD wrap",
