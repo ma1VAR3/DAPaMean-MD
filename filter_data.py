@@ -1,6 +1,6 @@
 import json
 import os
-from utils import load_data
+from utils import load_data, std_preproc_itms
 
 if __name__ == "__main__":
     config = None
@@ -10,11 +10,6 @@ if __name__ == "__main__":
         jsonfile.close()
 
     dataset = config["dataset"]
-    data, metadata = load_data(dataset, config["data"][dataset])
-    os.makedirs("./data", exist_ok=True)
-    if config["data"][dataset]["Synthetic"] == False:
-        data.to_csv("./data/filtered_data.csv", index=False)
-        metadata.to_csv("./data/filtered_metadata.csv", index=False)
-    else:
-        data.to_csv("./data/synthetic2_data.csv", index=False)
-        metadata.to_csv("./data/synthetic2_metadata.csv", index=False)
+    data = std_preproc_itms(config["data"][dataset])
+    data.to_csv("./data/ITMS_processed.csv", index=False)
+    load_data(data, config["num_experiments"], config["data"][dataset])
