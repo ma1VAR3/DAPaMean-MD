@@ -1,4 +1,6 @@
 import json
+import os
+import time
 import math
 import numpy as np
 import pandas as pd
@@ -7,210 +9,123 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 
-def load_data(dataset="ITMS", config=None):
+def std_preproc_itms(config):
+    df = pd.read_csv("./suratITMSDPtest/suratITMSDPtest.csv")
+    df = df.drop_duplicates(
+        subset=["trip_id", "observationDateTime"], ignore_index=True
+    )
+    df = df.drop(
+        columns=[
+            "trip_direction",
+            "last_stop_id",
+            "last_stop_arrival_time",
+            "route_id",
+            "actual_trip_start_time",
+            "trip_delay",
+            "vehicle_label",
+            "id",
+            "location.type",
+            "trip_id",
+        ]
+    )
+    lat_lon = df["location.coordinates"].astype(str).str.strip("[]").str.split(",")
+    lon = lat_lon.apply(lambda x: x[0])
+    lat = lat_lon.apply(lambda x: x[1])
+    dflen = len(df)
+    h3index = [None] * dflen
+    resolution = config["H3 Resolution"]
+    for i in range(dflen):
+        h3index[i] = h3.geo_to_h3(
+            lat=float(lat[i]), lng=float(lon[i]), resolution=resolution
+        )
+    df["h3index"] = h3index
+    df["Date"] = pd.to_datetime(df["observationDateTime"]).dt.date
+    df["Time"] = pd.to_datetime(df["observationDateTime"]).dt.time
+    time = df["Time"]
+    df["Timeslot"] = time.apply(lambda x: x.hour)
+    df["HAT"] = df["Timeslot"].astype(str) + " " + df["h3index"]
+    startTime = config["Start time"]
+    endTime = config["End time"]
+    df = df[(df["Timeslot"] >= startTime) & (df["Timeslot"] <= endTime)]
+    df = df[df["speed"] > 0]
+
+    df = df.drop(
+        columns=[
+            "observationDateTime",
+            "location.coordinates",
+            "h3index",
+            "Date",
+            "Time",
+            "Timeslot",
+        ]
+    )
+    df = df.rename(
+        columns={"license_plate": "User", "speed": "Value", "HAT": "Dimension"}
+    )
+
+    num_user_filtering_df = (
+        df.groupby(["Dimension"]).agg({"User": "nunique"}).reset_index()
+    )
+    num_user_filtering_df = num_user_filtering_df.sort_values(
+        by=["User"], ascending=False
+    ).reset_index()
+    num_user_filtering_df = num_user_filtering_df.loc[0]
+    chosen_hat = num_user_filtering_df["Dimension"]
+
+    print(chosen_hat)
+    df = df[df["Dimension"] == chosen_hat]
+
+    return df
+
+
+def generate_metadata(data):
+    dims = data["Dimension"].unique()
+    l_vals = []
+    k_vals = []
+    actual_mean_vals = []
+    for d in dims:
+        dim_data = data[data["Dimension"] == d]
+        dim_l = calc_user_array_length(dim_data)
+        l_vals.append(dim_l)
+        dim_k = calc_k(dim_data, dim_l)
+        k_vals.append(dim_k)
+        dim_vals = dim_data["Value"].values
+        dim_actual_mean = np.mean(dim_vals)
+        actual_mean_vals.append(dim_actual_mean)
+    metadata_dict = {
+        "Dimension": dims,
+        "L": l_vals,
+        "K": k_vals,
+        "Actual Mean": actual_mean_vals,
+    }
+    metadata_df = pd.DataFrame(metadata_dict)
+    metadata_df["Sup"] = np.sqrt(metadata_df["L"]) * metadata_df["K"]
+    return metadata_df
+
+
+def load_data(preproc_data, num_exp=0, config=None):
     data = None
-    metadata_df = None
-    if dataset == "ITMS" and config["Synthetic"] == False:
-        df = pd.read_csv("./suratITMSDPtest/suratITMSDPtest.csv")
-        df = df.drop_duplicates(
-            subset=["trip_id", "observationDateTime"], ignore_index=True
-        )
-        df = df.drop(
-            columns=[
-                "trip_direction",
-                "last_stop_id",
-                "last_stop_arrival_time",
-                "route_id",
-                "actual_trip_start_time",
-                "trip_delay",
-                "vehicle_label",
-                "id",
-                "location.type",
-                "trip_id",
-            ]
-        )
-        lat_lon = df["location.coordinates"].astype(str).str.strip("[]").str.split(",")
-        lon = lat_lon.apply(lambda x: x[0])
-        lat = lat_lon.apply(lambda x: x[1])
-        dflen = len(df)
-        h3index = [None] * dflen
-        resolution = config["H3 Resolution"]
-        for i in range(dflen):
-            h3index[i] = h3.geo_to_h3(
-                lat=float(lat[i]), lng=float(lon[i]), resolution=resolution
-            )
-        df["h3index"] = h3index
-        df["Date"] = pd.to_datetime(df["observationDateTime"]).dt.date
-        df["Time"] = pd.to_datetime(df["observationDateTime"]).dt.time
-        time = df["Time"]
-        df["Timeslot"] = time.apply(lambda x: x.hour)
-        df["HAT"] = df["Timeslot"].astype(str) + " " + df["h3index"]
-        startTime = config["Start time"]
-        endTime = config["End time"]
-        df = df[(df["Timeslot"] >= startTime) & (df["Timeslot"] <= endTime)]
-        df = df[df["speed"] > 0]
-        h_d = df
-        # max_user_filtering_df = (
-        #     h_d.groupby(["h3index"]).agg({"license_plate": "nunique"}).reset_index()
-        # )
-        # max_user_hexagon_sort = max_user_filtering_df.sort_values(
-        #     by=["license_plate"], ascending=False
-        # )
-        # max_user_hexagon = max_user_hexagon_sort["h3index"].iloc[0]
-        # print(max_user_hexagon)
-        # h_d = h_d[h_d["h3index"] == max_user_hexagon]
-        num_user_filtering_df = (
-            h_d.groupby(["HAT"]).agg({"license_plate": "nunique"}).reset_index()
-        )
-        num_user_filtering_df = num_user_filtering_df[
-            num_user_filtering_df["license_plate"] >= 150
-        ]
-        h_d = h_d[h_d["HAT"].isin(num_user_filtering_df["HAT"].values)]
-        h_d = h_d.drop(
-            columns=[
-                "observationDateTime",
-                "location.coordinates",
-                "h3index",
-                "Date",
-                "Time",
-                "Timeslot",
-            ]
-        )
+    if config["Synthetic"] == False:
+        return preproc_data, generate_metadata(preproc_data)
 
-        h_d = h_d.rename(
-            columns={"license_plate": "User", "speed": "Value", "HAT": "Dimension"}
-        )
-        data = h_d
-
-        dims = data["Dimension"].unique()
-        users = data["User"].unique()
-        l_vals = []
-        k_vals = []
-        actual_mean_vals = []
-        for d in dims:
-            dim_data = data[data["Dimension"] == d]
-            dim_l = calc_user_array_length(dim_data)
-            l_vals.append(dim_l)
-            dim_k = calc_k(dim_data, dim_l)
-            # dim_data_grouped = dim_data.groupby(["User"]).agg({"Value": "count"}).reset_index()
-            # dim_k = np.sum([np.minimum(i, dim_l) for i in dim_data_grouped["Value"]]) / dim_l
-            k_vals.append(dim_k)
-            dim_vals = dim_data["Value"].values
-            dim_actual_mean = np.mean(dim_vals)
-            actual_mean_vals.append(dim_actual_mean)
-        metadata_dict = {
-            "Dimension": dims,
-            "L": l_vals,
-            "K": k_vals,
-            "Actual Mean": actual_mean_vals,
-        }
-        metadata_df = pd.DataFrame(metadata_dict)
-        metadata_df["Sup"] = np.sqrt(metadata_df["L"]) * metadata_df["K"]
-
-        # import plotly.express as px
-        # fig = px.histogram(metadata_df["Sup"].values, nbins=30)
-        # fig.show()
-
-        # filtered_metadata_df = metadata_df[metadata_df["Sup"] >= 800]
-        # filtered_dims = filtered_metadata_df["Dimension"].unique()
-        # filtered_data = data[data["Dimension"].isin(filtered_dims)]
-
-        print("Remaining dims: ", len(metadata_df["Dimension"].unique()))
-        # print("Filtered dims: ", len(filtered_metadata_df["Dimension"].unique()))
-
-    if dataset == "ITMS" and config["Synthetic"] == True:
-        df = pd.read_csv("./suratITMSDPtest/suratITMSDPtest.csv")
-        df = df.drop_duplicates(
-            subset=["trip_id", "observationDateTime"], ignore_index=True
-        )
-        df = df.drop(
-            columns=[
-                "trip_direction",
-                "last_stop_id",
-                "last_stop_arrival_time",
-                "route_id",
-                "actual_trip_start_time",
-                "trip_delay",
-                "vehicle_label",
-                "id",
-                "location.type",
-                "trip_id",
-            ]
-        )
-        lat_lon = df["location.coordinates"].astype(str).str.strip("[]").str.split(",")
-        lon = lat_lon.apply(lambda x: x[0])
-        lat = lat_lon.apply(lambda x: x[1])
-        dflen = len(df)
-        h3index = [None] * dflen
-        resolution = config["H3 Resolution"]
-        for i in range(dflen):
-            h3index[i] = h3.geo_to_h3(
-                lat=float(lat[i]), lng=float(lon[i]), resolution=resolution
-            )
-        df["h3index"] = h3index
-        df["Date"] = pd.to_datetime(df["observationDateTime"]).dt.date
-        df["Time"] = pd.to_datetime(df["observationDateTime"]).dt.time
-        time = df["Time"]
-        df["Timeslot"] = time.apply(lambda x: x.hour)
-        df["HAT"] = df["Timeslot"].astype(str) + " " + df["h3index"]
-        startTime = config["Start time"]
-        endTime = config["End time"]
-        df = df[(df["Timeslot"] >= startTime) & (df["Timeslot"] <= endTime)]
-        df = df[df["speed"] > 0]
-
-        df = df.drop(
-            columns=[
-                "observationDateTime",
-                "location.coordinates",
-                "h3index",
-                "Date",
-                "Time",
-                "Timeslot",
-            ]
-        )
-
-        df = df.rename(
-            columns={"license_plate": "User", "speed": "Value", "HAT": "Dimension"}
-        )
-        num_user_filtering_df = (
-            df.groupby(["Dimension"]).agg({"User": "nunique"}).reset_index()
-        )
-        num_user_filtering_df = num_user_filtering_df[
-            num_user_filtering_df["User"] >= 150
-        ]
-        df = df[df["Dimension"].isin(num_user_filtering_df["Dimension"].values)]
+    if config["Synthetic"] == True:
+        df = preproc_data
         data = None
-        if config["Synthetic Scaling"] == "samples":
-            data = synthesize_perdim_peruser(df, config)
-        elif config["Synthetic Scaling"] == "users":
-            data = synthesize_perdim(df, config)
+
+        os.makedirs(
+            "./gen_data/",
+            exist_ok=True,
+        )
+        for i in range(num_exp):
+            if config["Synthetic Scaling"] == "samples":
+                data = synthesize_perdim_scale_samples(df, config)
+            elif config["Synthetic Scaling"] == "users":
+                data = synthesize_perdim_scale_users(df, config)
+            data.to_csv("./gen_data/" + str(i) + ".csv", index=False)
+            metadata = generate_metadata(data)
+            metadata.to_csv("./gen_data/" + str(i) + "_metadata.csv", index=False)
         else:
             print("Invalid scaling type")
-            return
-        dims = data["Dimension"].unique()
-        users = data["User"].unique()
-        l_vals = []
-        k_vals = []
-        actual_mean_vals = []
-        for d in dims:
-            dim_data = data[data["Dimension"] == d]
-            dim_l = calc_user_array_length(dim_data)
-            l_vals.append(dim_l)
-            dim_k = calc_k(dim_data, dim_l)
-            k_vals.append(dim_k)
-            dim_vals = dim_data["Value"].values
-            dim_actual_mean = np.mean(dim_vals)
-            actual_mean_vals.append(dim_actual_mean)
-        metadata_dict = {
-            "Dimension": dims,
-            "L": l_vals,
-            "K": k_vals,
-            "Actual Mean": actual_mean_vals,
-        }
-        metadata_df = pd.DataFrame(metadata_dict)
-        metadata_df["Sup"] = np.sqrt(metadata_df["L"]) * metadata_df["K"]
-    # return filtered_data, filtered_metadata_df
-    return data, metadata_df
 
 
 def synthesize_perdim_peruser(data, config):
@@ -219,7 +134,7 @@ def synthesize_perdim_peruser(data, config):
     value_arr = []
     bins = np.arange(config["lower_bound"], config["upper_bound"] + 1, 1)
     dims = data["Dimension"].unique()
-    for prog, d in zip(tqdm(range(len(dims))), dims):
+    for d in dims:
         # for d in dims:
         dim_data = data[data["Dimension"] == d]
         dim_users = dim_data["User"].unique()
@@ -241,7 +156,7 @@ def synthesize_perdim_peruser(data, config):
             # plt.show()
             # plt.hist(user_new_samples, bins=bins, density=True)
             # plt.show()
-
+        value_arr = np.clip(value_arr, config["lower_bound"], config["upper_bound"])
     syn_data = pd.DataFrame(
         {"Dimension": dimension_arr, "User": user_arr, "Value": value_arr}
     )
@@ -249,12 +164,46 @@ def synthesize_perdim_peruser(data, config):
     return syn_data
 
 
-def synthesize_perdim(data, config):
+def synthesize_perdim_scale_samples(data, config):
     dimension_arr = []
     user_arr = []
     value_arr = []
     dims = data["Dimension"].unique()
-    for prog, d in zip(tqdm(range(len(dims))), dims):
+    for d in dims:
+        dim_data = data[data["Dimension"] == d]
+        dim_samples = dim_data["Value"].values
+        mean = np.mean(dim_samples)
+        std = np.std(dim_samples)
+        dim_users = dim_data["User"].unique()
+        num_dim_samples = len(dim_samples) * config["Synthetic Factor"]
+        start = time.time()
+        new_dim_samples = np.random.normal(mean, std, num_dim_samples)
+        end = time.time()
+        print("Sampling time: ", end - start)
+        value_arr.extend(new_dim_samples)
+        for u in dim_users:
+            num_user_samples_in_dim = len(
+                dim_data[dim_data["User"] == u]["Value"].values
+            )
+            dimension_arr.extend(
+                [d] * (num_user_samples_in_dim * config["Synthetic Factor"])
+            )
+            user_arr.extend(
+                [u] * (num_user_samples_in_dim * config["Synthetic Factor"])
+            )
+        value_arr = np.clip(value_arr, config["lower_bound"], config["upper_bound"])
+    syn_data = pd.DataFrame(
+        {"Dimension": dimension_arr, "User": user_arr, "Value": value_arr}
+    )
+    return syn_data
+
+
+def synthesize_perdim_scale_users(data, config):
+    dimension_arr = []
+    user_arr = []
+    value_arr = []
+    dims = data["Dimension"].unique()
+    for d in dims:
         dim_data = data[data["Dimension"] == d]
         dim_samples = dim_data["Value"].values
         mean = np.mean(dim_samples)
@@ -270,6 +219,9 @@ def synthesize_perdim(data, config):
                 dimension_arr.extend([d] * num_user_samples_in_dim)
                 user_arr.extend([new_uid] * num_user_samples_in_dim)
                 value_arr.extend(new_user_samples)
+        value_arr = np.clip(value_arr, config["lower_bound"], config["upper_bound"])
+        # plt.hist(value_arr, density=True, bins=65)
+        # plt.show()
         # plt.hist(dim_samples, bins=bins, density=True)
         # plt.show()
         # plt.hist(new_samples, bins=bins, density=True)
@@ -474,3 +426,61 @@ def calc_user_array_length(data, type="opt"):
         end = np.percentile(user_contribs, 90).astype(int)
         L = optimize_me(user_contribs, start, end, step=1)
     return L
+
+
+def comp_arrays(arr1, arr2):
+    len1 = len(arr1)
+    len2 = len(arr2)
+    len1a = len(arr1[0])
+    len2a = len(arr2[0])
+    print("Dimensions of array 1: ", len1, ", ", len1a)
+    print("Dimensions of array 2: ", len2, ", ", len2a)
+    flag = True
+    fault_counts = 0
+    if len1 == len2 and len1a == len2a:
+        for x, y in zip(arr1, arr2):
+            for x1 in x:
+                if x1 not in y:
+                    fault_counts += 1
+                    flag = False
+    print("faults:", fault_counts)
+    return flag
+
+
+def comp_arrays_1d(arr1, arr2):
+    len1 = len(arr1)
+    len2 = len(arr2)
+    flag = True
+    faults = 0
+    fault_idx = []
+    if len1 != len2:
+        flag = False
+        return flag
+    for i in range(len1):
+        if round(arr1[i], 4) != round(arr2[i], 4):
+            flag = False
+            faults += 1
+            fault_idx.append(i)
+    print("faults:", faults)
+    # print(arr1)
+    # print(arr2)
+    # print(fault_idx)
+    return flag
+
+
+def comp_dicts(dict1, dict2):
+    flag = True
+    for dict1_key in dict1.keys():
+        if dict1_key not in dict2.keys():
+            print(dict1_key)
+            flag = False
+            break
+        dict1_user_dict = dict1[dict1_key]
+        dict2_user_dict = dict2[dict1_key]
+        if dict1_user_dict != dict2_user_dict:
+            flag = False
+            break
+    if flag == True:
+        print("Metadata match!")
+    else:
+        print("Metadata DO NOT match!!!!")
