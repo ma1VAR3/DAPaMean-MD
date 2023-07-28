@@ -2,8 +2,8 @@
     "dataset" : "ITMS", 
     "data" : {
         "ITMS" : {
-            "Synthetic" : false,
-            "Synthetic Scaling" : "users",
+            "Synthetic" : true,
+            "Synthetic Scaling" : "samples",
             "Synthetic Factor" : 10,
             "H3 Resolution" : 6,
             "lower_bound" : 0,
@@ -13,12 +13,10 @@
         }
     },
     "contrib_qtile" : 0.9,
-    "epsilons" : [1, 2, 3, 4],
-    "num_experiments" : 500000,
-    "error_percentiles" : [95, 98, 99],
-    "user_group_size" : "median",
-    "user_groupping" : "wrap",
-    "concentration_algorithm" : "baseline",
+    "epsilons" : [0.5, 1],
+    "num_experiments" : 2,
+    "user_groupping" : "best_fit",
+    "concentration_algorithm" : "coarse_mean",
     "drop_dims" : false,
     "algorithm_parameters" : {
         "coarse_mean" : {

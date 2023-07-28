@@ -119,6 +119,7 @@ def private_estimation(
         noise_projected_vals = np.random.laplace(
             0, (3 * tau * factor) / (K * (epsilon / 2)), num_exp
         )
+        # print("Noise scale: ", (3 * tau * factor) / (K * (epsilon / 2)))
         final_estimates = mean_of_projected_vals + noise_projected_vals
         final_estimates = np.clip(final_estimates, lb, ub)
         losses = np.abs(final_estimates - actual_mean)
