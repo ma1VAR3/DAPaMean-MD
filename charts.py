@@ -121,30 +121,30 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results single hat syn users/{}/{}/{}/losses.npy"
+file_path_base = "./results/{}/{}/{}/losses.npy"
 conc_algos = ["baseline", "coarse_mean", "quantiles"]
 epsilons = config["epsilons"]
 factor1 = 30
 factor2 = 22
 
 # losses_base_rmse = []
-# losses_base2_rmse = []
-# losses_base2_bf_rmse = []
-# losses_cm_rmse = []
-# losses_cm_bf_rmse = []
+losses_base2_rmse = []
+losses_base2_bf_rmse = []
+losses_cm_rmse = []
+losses_cm_bf_rmse = []
 losses_q_wrap_rmse = []
 losses_q_best_rmse = []
 
 # losses_base_worst = []
-# losses_base2_worst = []
-# losses_base2_bf_worst = []
-# losses_cm_worst = []
-# losses_cm_bf_worst = []
+losses_base2_worst = []
+losses_base2_bf_worst = []
+losses_cm_worst = []
+losses_cm_bf_worst = []
 losses_q_wrap_worst = []
 losses_q_best_worst = []
 
 for e in epsilons:
-    losses_base_e = np.load(file_path_base.format("baseline", "wrap", str(e)))
+    # losses_base_e = np.load(file_path_base.format("baseline", "wrap", str(e)))
     losses_base2_e = np.load(file_path_base.format("baseline2", "wrap", str(e)))
     losses_base2_bf_e = np.load(file_path_base.format("baseline2", "best_fit", str(e)))
     losses_cm_e = np.load(file_path_base.format("coarse_mean", "wrap", str(e)))
@@ -154,28 +154,28 @@ for e in epsilons:
 
     loaded_set = [
         # losses_base_e,
-        # losses_base2_e,
-        # losses_base2_bf_e,
-        # losses_cm_e,
-        # losses_cm_bf_e,
+        losses_base2_e,
+        losses_base2_bf_e,
+        losses_cm_e,
+        losses_cm_bf_e,
         losses_q_wrap_e,
         losses_q_best_e,
     ]
     store_set_rmse = [
         # losses_base_rmse,
-        # losses_base2_rmse,
-        # losses_base2_bf_rmse,
-        # losses_cm_rmse,
-        # losses_cm_bf_rmse,
+        losses_base2_rmse,
+        losses_base2_bf_rmse,
+        losses_cm_rmse,
+        losses_cm_bf_rmse,
         losses_q_wrap_rmse,
         losses_q_best_rmse,
     ]
     store_set_worst = [
         # losses_base_worst,
-        # losses_base2_worst,
-        # losses_base2_bf_worst,
-        # losses_cm_worst,
-        # losses_cm_bf_worst,
+        losses_base2_worst,
+        losses_base2_bf_worst,
+        losses_cm_worst,
+        losses_cm_bf_worst,
         losses_q_wrap_worst,
         losses_q_best_worst,
     ]
@@ -200,10 +200,10 @@ fig = get_figure(
     "Epsilon per dimension",
     [
         # losses_base_rmse,
-        # losses_base2_rmse,
-        # losses_base2_bf_rmse,
-        # losses_cm_rmse,
-        # losses_cm_bf_rmse,
+        losses_base2_rmse,
+        losses_base2_bf_rmse,
+        losses_cm_rmse,
+        losses_cm_bf_rmse,
         losses_q_wrap_rmse,
         losses_q_best_rmse,
     ],
@@ -211,10 +211,10 @@ fig = get_figure(
     "Error vs Epsilon per Dimension",
     [
         # "Baseline",
-        # "AAA + wrap",
-        # "AAA + best",
-        # "Levy + wrap",
-        # "Levy + best",
+        "AAA + wrap",
+        "AAA + best",
+        "Levy + wrap",
+        "Levy + best",
         "DAPaMean-MD wrap",
         "DAPaMean-MD best",
     ],
@@ -228,10 +228,10 @@ fig = get_figure(
     "Epsilon per dimension",
     [
         # losses_base_worst,
-        # losses_base2_worst,
-        # losses_base2_bf_worst,
-        # losses_cm_worst,
-        # losses_cm_bf_worst,
+        losses_base2_worst,
+        losses_base2_bf_worst,
+        losses_cm_worst,
+        losses_cm_bf_worst,
         losses_q_wrap_worst,
         losses_q_best_worst,
     ],
@@ -239,10 +239,10 @@ fig = get_figure(
     "Error vs Epsilon per Dimension",
     [
         # "Baseline",
-        # "AAA + wrap",
-        # "AAA + best",
-        # "Levy + wrap",
-        # "Levy + best",
+        "AAA + wrap",
+        "AAA + best",
+        "Levy + wrap",
+        "Levy + best",
         "DAPaMean-MD wrap",
         "DAPaMean-MD best",
     ],

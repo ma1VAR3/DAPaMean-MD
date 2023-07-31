@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 def std_preproc_itms(config):
-    df = pd.read_csv("./suratITMSDPtest/suratITMSDPtest.csv")
+    df = pd.read_csv("./data/suratITMSDPtest.csv")
     df = df.drop_duplicates(
         subset=["trip_id", "observationDateTime"], ignore_index=True
     )
@@ -121,11 +121,12 @@ def load_data(preproc_data, num_exp=0, config=None):
                 data = synthesize_perdim_scale_samples(df, config)
             elif config["Synthetic Scaling"] == "users":
                 data = synthesize_perdim_scale_users(df, config)
+            else:
+                print("Invalid scaling type")
             data.to_csv("./gen_data/" + str(i) + ".csv", index=False)
             metadata = generate_metadata(data)
             metadata.to_csv("./gen_data/" + str(i) + "_metadata.csv", index=False)
-        else:
-            print("Invalid scaling type")
+
 
 
 def synthesize_perdim_peruser(data, config):
