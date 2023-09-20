@@ -4,8 +4,296 @@ import json
 import numpy as np
 from dash import Dash, html, dcc
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.io as pio
+pio.renderers.default = "notebook"
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+
+def get_subplots_nonSynthetic(
+    x_axis_data,
+    x_label,
+    y_axis_data,
+    y_label,
+    title,
+    legend,
+    y_axis_tick=0.5,
+    legend_prefix="",
+):    
+    fig = go.Figure()
+    maks = [
+        "hourglass",
+        "circle",
+        "square",
+        "star",
+        "square-open",
+        "x",
+        "bowtie",
+        "circle-open",
+        "x-open",
+    ]
+    mp_maks = ["o", "^", "s", "*", "x", "P"]
+    line_styles = [
+        "-",
+        "-.",
+        "--",
+        ":",
+        "-",
+        "--",
+        ":",
+        "-.",
+        "-",
+        "--",
+        ":",
+        "-.",
+        "-",
+        "--",
+        ":",
+        "-.",
+    ]
+
+    fig.update_layout(
+        # scene = dict(
+        #     xaxis_title=x_label,
+        #     yaxis_title=y_label,
+        # ),
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        title_text=title,
+        title_x=0.5,
+    )
+    # Create subplots
+    fig = make_subplots(rows=2, cols=1, 
+                        shared_xaxes=True,
+                        # shared_yaxes=True,
+                        horizontal_spacing=0.05, 
+                        vertical_spacing=0.06, 
+                        subplot_titles=("Synthetic Data with Sample Scaling",
+                                        ""
+                                        )
+                        )
+
+#for reference only, DO NOT UNCOMMENT
+# [
+#  0       losses_base2_rmse,
+#  1       losses_base2_bf_rmse,
+#  2       losses_cm_rmse,
+#  3       losses_cm_bf_rmse,
+#  4       losses_q_wrap_rmse,
+#  5       losses_q_best_rmse,
+#  6       losses_base2_worst,
+#  7       losses_base2_bf_worst,
+#  8       losses_cm_worst,
+#  9      losses_cm_bf_worst,
+#  10      losses_q_wrap_worst,
+#  11      losses_q_best_worst,
+#     ]
+
+    #creating an array of y values 
+    y = []
+    for i in y_axis_data:
+        y.append(i)
+    # print(y)
+    # print(x_axis_data)
+
+    # Add traces to the first subplot (RMSE)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[1], 
+                             mode='lines+markers', 
+                             name='Array-Averaging',
+                             marker_color = 'green',
+                             marker_symbol=maks[0]),
+                row=1, col=1)  
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[3], 
+                             mode='lines+markers', 
+                             name='Levy Algorithm-based Clipping',
+                             marker_color = 'blue', 
+                             marker_symbol=maks[1]),
+                row=1, col=1)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[5], 
+                             mode='lines+markers', 
+                             name='Quantile-based Clipping',
+                             marker_color = 'orange', 
+                             marker_symbol=maks[2]),
+                row=1, col=1)
+
+    # Add a trace to the second subplot (MAE)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[7], 
+                             mode='lines+markers', 
+                             name='Array-Averaging',
+                             marker_color = 'green',
+                             showlegend=False,
+                             marker_symbol=maks[0]),
+                row=2, col=1)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[9], 
+                             mode='lines+markers', 
+                             name='Levy Algorithm-based Clipping',
+                             marker_color = 'blue',
+                             showlegend=False,
+                             marker_symbol=maks[1]),
+                row=2, col=1)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[11], 
+                             mode='lines+markers', 
+                             name='Quantile-based Clipping',
+                             marker_color = 'orange',
+                             showlegend=False,
+                             marker_symbol=maks[2]),
+                row=2, col=1)
+    
+    # Update subplot layout
+    # fig.update_xaxes(title_text='Epsilon', row=1, col=1)
+    fig.update_yaxes(title_text='RMSE', row=1, col=1)
+    fig.update_xaxes(title_text='Epsilon', row=2, col=1)
+    fig.update_yaxes(title_text='MAE', row=2, col=1)
+
+    # Update the title of the entire figure
+    fig.update_layout(legend=dict(yanchor="top", y=1, xanchor="left", x=0.65),
+                      height=800, 
+                      width=800, 
+                      title_text='<b>Comparison of Concentration Algorithms w/ Best-Fit Grouping</b>',
+                      title_x=0.5)
+
+    # fig.show() 
+    return fig
+
+def get_subplots_SampleScaling(
+    x_axis_data,
+    x_label,
+    y_axis_data,
+    y_label,
+    title,
+    legend,
+    y_axis_tick=0.5,
+    legend_prefix="",
+):    
+    fig = go.Figure()
+    maks = [
+        "hourglass",
+        "circle",
+        "square",
+        "star",
+        "square-open",
+        "x",
+        "bowtie",
+        "circle-open",
+        "x-open",
+    ]
+    mp_maks = ["o", "^", "s", "*", "x", "P"]
+    line_styles = [
+        "-",
+        "-.",
+        "--",
+        ":",
+        "-",
+        "--",
+        ":",
+        "-.",
+        "-",
+        "--",
+        ":",
+        "-.",
+        "-",
+        "--",
+        ":",
+        "-.",
+    ]
+
+    fig.update_layout(
+        # scene = dict(
+        #     xaxis_title=x_label,
+        #     yaxis_title=y_label,
+        # ),
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        title_text=title,
+        title_x=0.5,
+    )
+    # Create subplots
+    fig = make_subplots(rows=2, cols=1, 
+                        shared_xaxes=True, 
+                        vertical_spacing=0.06, 
+                        subplot_titles=("Array Averaging",
+                                        ""
+                                        )
+                        )
+
+#for reference only, DO NOT UNCOMMENT
+# [
+#  1       losses_base2_rmse,
+#  2       losses_base2_bf_rmse,
+#  3       losses_cm_rmse,
+#  4       losses_cm_bf_rmse,
+#  5       losses_q_wrap_rmse,
+#  6       losses_q_best_rmse,
+#  7       losses_base2_worst,
+#  8       losses_base2_bf_worst,
+#  9       losses_cm_worst,
+#  10      losses_cm_bf_worst,
+#  11      losses_q_wrap_worst,
+#  12      losses_q_best_worst,
+#     ]
+
+    #creating an array of y values 
+    y = []
+    for i in y_axis_data:
+        y.append(i)
+    # print(y)
+    # print(x_axis_data)
+
+    # Add traces to the first subplot
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[3], 
+                             mode='lines+markers', 
+                             name='Wrap-around grouping',
+                             marker_color = 'green',
+                             marker_symbol=maks[0]),
+                row=1, col=1)  
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[4], 
+                             mode='lines+markers', 
+                             name='Best-fit grouping',
+                             marker_color = 'blue', 
+                             marker_symbol=maks[1]),
+                row=1, col=1)
+
+    # Add a trace to the second subplot (Another Plot)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[9], 
+                             mode='lines+markers', 
+                             name='Wrap-around grouping',
+                             marker_color = 'green',
+                             showlegend=False,
+                             marker_symbol=maks[0]),
+                row=2, col=1)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[10], 
+                             mode='lines+markers', 
+                             name='Best-fit grouping',
+                             marker_color = 'blue',
+                             showlegend=False,
+                             marker_symbol=maks[1]),
+                row=2, col=1)
+        
+    # Update subplot layout
+    # fig.update_xaxes(title_text='Epsilon', row=1, col=1)
+    fig.update_yaxes(title_text='RMSE', row=1, col=1)
+    fig.update_xaxes(title_text='Epsilon', row=2, col=1)
+    fig.update_yaxes(title_text='MAE', row=2, col=1)
+
+    # Update the title of the entire figure
+    fig.update_layout(legend=dict(yanchor="top", y=0.95, xanchor="left", x=0.7),
+                      height=800, 
+                      width=800, 
+                      title_text='<b>Comparison of Grouping Algorithms for Non-Synthetic Data</b>',
+                      title_x=0.5)
+
+    # fig.show() 
+    return fig
 
 
 def get_figure(
@@ -121,7 +409,7 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results/{}/{}/{}/losses.npy"
+file_path_base = "./results_SampleScaling/{}/{}/{}/losses.npy"
 conc_algos = ["baseline", "coarse_mean", "quantiles"]
 epsilons = config["epsilons"]
 factor1 = 30
@@ -195,39 +483,72 @@ for e in epsilons:
         store_array.append(mean_perc)
 
 
-fig = get_figure(
+# fig = get_figure(
+#     epsilons,
+#     "Epsilon",
+#     [
+#         # losses_base_rmse,
+#         losses_base2_rmse,
+#         losses_base2_bf_rmse,
+#         losses_cm_rmse,
+#         losses_cm_bf_rmse,
+#         losses_q_wrap_rmse,
+#         losses_q_best_rmse,
+#     ],
+#     "Error",
+#     "Error vs Epsilon",
+#     [
+#         # "Baseline",
+#         "Array Averaging + wrap-around grouping",
+#         "Array Averaging + best-fit grouping",
+#         "Levy Algorithm + wrap-around grouping",*
+#         "Levy Algorithm + best-fit grouping",*
+#         "DAPaMean-MD + wrap-around grouping",
+#         "DAPaMean-MD + best-fit grouping",
+#     ],
+#     legend_prefix="",
+# )
+
+# fig.show()
+
+# fig = get_figure(
+#     epsilons,
+#     "Epsilon",
+#     [
+#         # losses_base_worst,
+#         losses_base2_worst,
+#         losses_base2_bf_worst,
+#         losses_cm_worst,
+#         losses_cm_bf_worst,
+#         losses_q_wrap_worst,
+#         losses_q_best_worst,
+#     ],
+#     "Error",
+#     "Error vs Epsilon",
+#     [
+#         # "Baseline",
+#         "AAA + wrap",
+#         "AAA + best",
+#         "Levy + wrap",
+#         "Levy + best",
+#         "DAPaMean-MD wrap",
+#         "DAPaMean-MD best",
+#     ],
+#     legend_prefix="",
+# )
+
+# fig.show()
+
+fig = get_subplots_nonSynthetic(
     epsilons,
-    "Epsilon per dimension",
+    "Epsilon",
     [
-        # losses_base_rmse,
         losses_base2_rmse,
         losses_base2_bf_rmse,
         losses_cm_rmse,
         losses_cm_bf_rmse,
         losses_q_wrap_rmse,
         losses_q_best_rmse,
-    ],
-    "Error",
-    "Error vs Epsilon per Dimension",
-    [
-        # "Baseline",
-        "AAA + wrap",
-        "AAA + best",
-        "Levy + wrap",
-        "Levy + best",
-        "DAPaMean-MD wrap",
-        "DAPaMean-MD best",
-    ],
-    legend_prefix="",
-)
-
-fig.show()
-
-fig = get_figure(
-    epsilons,
-    "Epsilon per dimension",
-    [
-        # losses_base_worst,
         losses_base2_worst,
         losses_base2_bf_worst,
         losses_cm_worst,
@@ -236,7 +557,7 @@ fig = get_figure(
         losses_q_best_worst,
     ],
     "Error",
-    "Error vs Epsilon per Dimension",
+    "Error vs Epsilon",
     [
         # "Baseline",
         "AAA + wrap",
@@ -249,8 +570,22 @@ fig = get_figure(
     legend_prefix="",
 )
 
-fig.show()
+fig.write_image("results_SampleScaling/plots/ConcentrationAlgoComparisonBestFit_SS.png")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# fig.show()
 # mul_q = 40
 # mul_b = 63
 

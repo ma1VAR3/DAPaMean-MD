@@ -3,7 +3,7 @@
     "data" : {
         "ITMS" : {
             "Synthetic" : true,
-            "Synthetic Scaling" : "samples",
+            "Synthetic Scaling" : "",
             "Synthetic Factor" : 10,
             "H3 Resolution" : 6,
             "lower_bound" : 0,
@@ -13,7 +13,7 @@
         }
     },
     "contrib_qtile" : 0.9,
-    "epsilons" : [0.5, 1],
+    "epsilons" : [0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.4, 1.6, 2],
     "num_experiments" : 2,
     "user_groupping" : "best_fit",
     "concentration_algorithm" : "coarse_mean",
