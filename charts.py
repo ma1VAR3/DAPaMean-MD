@@ -68,7 +68,7 @@ def get_subplots_nonSynthetic(
                         # shared_yaxes=True,
                         horizontal_spacing=0.05, 
                         vertical_spacing=0.06, 
-                        subplot_titles=("Synthetic Data with Sample Scaling",
+                        subplot_titles=("Synthetic Data with User Scaling",
                                         ""
                                         )
                         )
@@ -409,7 +409,7 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results_SampleScaling/{}/{}/{}/losses.npy"
+file_path_base = "./results_UserScaling/{}/{}/{}/losses.npy"
 conc_algos = ["baseline", "coarse_mean", "quantiles"]
 epsilons = config["epsilons"]
 factor1 = 30
@@ -570,7 +570,7 @@ fig = get_subplots_nonSynthetic(
     legend_prefix="",
 )
 
-fig.write_image("results_SampleScaling/plots/ConcentrationAlgoComparisonBestFit_SS.png")
+fig.write_image("results_UserScaling/plots/ConcentrationAlgoComparisonBestFit_US.png")
 
 
 
