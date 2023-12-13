@@ -181,7 +181,7 @@ def private_estimation(
         a, b = minimizer_quantiles(epsilon_from_config, user_group_means)
         factor = 2 if groupping_algo == "wrap" else 1
         sorted_user_group_means = np.sort(user_group_means)
-        quantile_1 = (np.sum(np.array(sorted_user_group_means)-a <= 0))/len(sorted_user_group_means)
+        quantile_1 = (np.sum((sorted_user_group_means-a) <= 0))/len(sorted_user_group_means)
         quantile_2 = 1 - quantile_1
         q1_t = private_quantile(
             user_group_means, quantile_1, epsilon / 4, ub, lb, num_exp, factor)
