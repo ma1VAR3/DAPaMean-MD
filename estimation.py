@@ -52,22 +52,19 @@ def private_quantile(vals, q, epsilon, ub, lb, num_vals, factor):
     return selected_quantile
 
 # call function with user_group_means
-with open("./config.json", "r") as jsonfile:
-        config = json.load(jsonfile)
-        epsilon_from_config = config["epsilons"]
+
 def minimizer_quantiles(e, array_means):
-    a_minimum = []
-    b_minimum = []
-    for eps in e:
-        array_means_sorted = np.sort(array_means)
-        # print(len(array_means_sorted))
-        # print(eps)
-        chosen_index = int(max(0 , (np.floor((2/eps))-1)))
-        # print(type(chosen_index))
-        a_minimum.append(array_means_sorted[chosen_index])
-        b_min_index = int(max(int(min(len(array_means_sorted)-chosen_index, (len(array_means_sorted)-1))),0))
-        b_minimum.append(array_means_sorted[b_min_index])
-    return a_minimum, b_minimum
+    array_means_sorted = np.sort(array_means)
+    # print(len(array_means_sorted))
+    # print(eps)
+    chosen_index = int(max(0 , (np.floor((2/e))-1)))
+    # print(type(chosen_index))
+    # a_minimum = (array_means_sorted[chosen_index])
+    # b_min_index = int(max(int(min(len(array_means_sorted)-chosen_index, (len(array_means_sorted)-1))),0))
+    # b_minimum.append(array_means_sorted[b_min_index])
+    quantile_1 = (np.sum((array_means_sorted-(array_means_sorted[chosen_index])) <= 0))/len(array_means_sorted)
+    quantile_2 = 1 - quantile_1
+    return quantile_1, quantile_2
 
 def private_estimation(
     user_group_means,
@@ -178,11 +175,8 @@ def private_estimation(
         # np.save(file_base_q + 'random_losses.npy', random_losses)
     
     elif conc_algo == "optimized_quantiles":
-        a, b = minimizer_quantiles(epsilon_from_config, user_group_means)
+        quantile_1, quantile_2 = minimizer_quantiles(epsilon, user_group_means)
         factor = 2 if groupping_algo == "wrap" else 1
-        sorted_user_group_means = np.sort(user_group_means)
-        quantile_1 = (np.sum((sorted_user_group_means-a) <= 0))/len(sorted_user_group_means)
-        quantile_2 = 1 - quantile_1
         q1_t = private_quantile(
             user_group_means, quantile_1, epsilon / 4, ub, lb, num_exp, factor)
         q2_t = private_quantile(
