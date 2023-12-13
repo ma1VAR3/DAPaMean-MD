@@ -178,11 +178,19 @@ def private_estimation(
         # np.save(file_base_q + 'random_losses.npy', random_losses)
     
     elif conc_algo == "optimized_quantiles":
-        quantile_1, quantile_2 = minimizer_quantiles(epsilon_from_config, user_group_means)
+        a, b = minimizer_quantiles(epsilon_from_config, user_group_means)
         factor = 2 if groupping_algo == "wrap" else 1
+        sorted_user_group_means = np.sort(user_group_means)
+        quantile_1 = (np.sum(np.array(sorted_user_group_means-a) <= 0))/len(sorted_user_group_means)
+        quantile_2 = 1 - quantile_1
+        q1_t = private_quantile(
+            user_group_means, quantile_1, epsilon / 4, ub, lb, num_exp, factor)
+        q2_t = private_quantile(
+            user_group_means, quantile_2, epsilon / 4, ub, lb, num_exp, factor)
+        
+        q1 = np.minimum(q1_t, q2_t)
+        q2 = np.maximum(q1_t, q2_t)
 
-        q1 = np.minimum(quantile_1, quantile_2)
-        q2 = np.maximum(quantile_1, quantile_2)
         projected_vals = [
             np.clip(user_group_means, q1[i], q2[i]) for i in range(len(q1))
         ]
@@ -201,7 +209,7 @@ def private_estimation(
     if conc_algo == "baseline2":
         factor = 2 if groupping_algo == "wrap" else 1
         coarse_mean = np.mean(user_group_means)
-        noise_baseline2 = np.random.laplace(0, ((ub - lb) / (K * epsilon)), num_exp)
+        noise_baseline2 = np.random.laplace(0, (((ub - lb) * factor) / (K * epsilon)), num_exp)
         final_estimates = coarse_mean + noise_baseline2
         final_estimates = np.clip(final_estimates, lb, ub)
         losses = np.abs(final_estimates - actual_mean)

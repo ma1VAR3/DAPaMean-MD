@@ -68,25 +68,27 @@ def get_subplots_nonSynthetic(
                         # shared_yaxes=True,
                         horizontal_spacing=0.05, 
                         vertical_spacing=0.06, 
-                        subplot_titles=("Synthetic Data with User Scaling",
+                        subplot_titles=("Non-Synthetic Data",
                                         ""
                                         )
                         )
 
 #for reference only, DO NOT UNCOMMENT
 # [
-#  0       losses_base2_rmse,
-#  1       losses_base2_bf_rmse,
-#  2       losses_cm_rmse,
-#  3       losses_cm_bf_rmse,
-#  4       losses_q_wrap_rmse,
-#  5       losses_q_best_rmse,
-#  6       losses_base2_worst,
-#  7       losses_base2_bf_worst,
-#  8       losses_cm_worst,
-#  9      losses_cm_bf_worst,
-#  10      losses_q_wrap_worst,
-#  11      losses_q_best_worst,
+# 0        losses_base2_rmse,
+# 1        losses_base2_bf_rmse,
+# 2        losses_cm_rmse,
+# 3        losses_cm_bf_rmse,
+# 4        losses_q_wrap_rmse,
+# 5        losses_q_best_rmse,
+# 6        losses_opq_bf_rmse,
+# 7        losses_base2_worst,
+# 8        losses_base2_bf_worst,
+# 9        losses_cm_worst,
+# 10       losses_cm_bf_worst,
+# 11       losses_q_wrap_worst,
+# 12       losses_q_best_worst,
+# 13       losses_opq_bf_worst,
 #     ]
 
     #creating an array of y values 
@@ -115,13 +117,20 @@ def get_subplots_nonSynthetic(
                              y=y[5], 
                              mode='lines+markers', 
                              name='Quantile-based Clipping',
-                             marker_color = 'orange', 
+                             marker_color = 'black', 
                              marker_symbol=maks[2]),
+                row=1, col=1)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[6], 
+                             mode='lines+markers', 
+                             name='Optimized Quantile-based Clipping',
+                             marker_color = 'orange', 
+                             marker_symbol=maks[3]),
                 row=1, col=1)
 
     # Add a trace to the second subplot (MAE)
     fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[7], 
+                             y=y[8], 
                              mode='lines+markers', 
                              name='Array-Averaging',
                              marker_color = 'green',
@@ -129,7 +138,7 @@ def get_subplots_nonSynthetic(
                              marker_symbol=maks[0]),
                 row=2, col=1)
     fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[9], 
+                             y=y[10], 
                              mode='lines+markers', 
                              name='Levy Algorithm-based Clipping',
                              marker_color = 'blue',
@@ -137,12 +146,20 @@ def get_subplots_nonSynthetic(
                              marker_symbol=maks[1]),
                 row=2, col=1)
     fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[11], 
+                             y=y[12], 
                              mode='lines+markers', 
                              name='Quantile-based Clipping',
+                             marker_color = 'black', 
+                             showlegend = False,
+                             marker_symbol=maks[2]),
+                row=2, col=1)
+    fig.add_trace(go.Scatter(x=x_axis_data, 
+                             y=y[13], 
+                             mode='lines+markers', 
+                             name='Optimized Quantile-based Clipping',
                              marker_color = 'orange',
                              showlegend=False,
-                             marker_symbol=maks[2]),
+                             marker_symbol=maks[3]),
                 row=2, col=1)
     
     # Update subplot layout
@@ -409,8 +426,8 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results_/{}/{}/{}/{}/losses.npy"
-conc_algos = ["baseline", "coarse_mean", "optimized_quantiles", "quantiles"]
+file_path_base = "./results_nonSynthetic/{}/{}/{}/losses.npy"
+conc_algos = ["baseline2", "coarse_mean", "optimized_quantiles", "quantiles"]
 epsilons = config["epsilons"]
 factor1 = 30
 factor2 = 22
@@ -555,14 +572,15 @@ fig = get_subplots_nonSynthetic(
         losses_cm_bf_rmse,
         losses_q_wrap_rmse,
         losses_q_best_rmse,
+        losses_opq_bf_rmse,
         losses_base2_worst,
         losses_base2_bf_worst,
         losses_cm_worst,
         losses_cm_bf_worst,
-        losses_opq_bf_rmse,
-        losses_opq_bf_worst,
         losses_q_wrap_worst,
         losses_q_best_worst,
+        losses_opq_bf_worst,
+
     ],
     "Error",
     "Error vs Epsilon",
@@ -579,7 +597,7 @@ fig = get_subplots_nonSynthetic(
     legend_prefix="",
 )
 
-fig.write_image("results_UserScaling/plots/ConcentrationAlgoComparisonBestFit_US.png")
+fig.write_image("results_nonSynthetic/plots/ConcentrationAlgoComparisonBestFit_withOptimizedQuantiles.png")
 
 
 
