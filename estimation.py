@@ -65,7 +65,8 @@ def minimizer_quantiles(e, array_means):
         chosen_index = int(max(0 , (np.floor((2/eps))-1)))
         print(type(chosen_index))
         a_minimum.append(array_means_sorted[chosen_index])
-        b_minimum.append(array_means_sorted[len(array_means_sorted) - chosen_index])
+        b_min_index = int(max(int(min(len(array_means_sorted)-chosen_index), (len(array_means_sorted)-1))),0)
+        b_minimum.append(array_means_sorted[b_min_index])
     return a_minimum, b_minimum
 
 def private_estimation(
