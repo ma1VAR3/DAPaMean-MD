@@ -409,8 +409,8 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results_UserScaling/{}/{}/{}/losses.npy"
-conc_algos = ["baseline", "coarse_mean", "quantiles"]
+file_path_base = "./results_/{}/{}/{}/{}/losses.npy"
+conc_algos = ["baseline", "coarse_mean", "optimized_quantiles", "quantiles"]
 epsilons = config["epsilons"]
 factor1 = 30
 factor2 = 22
@@ -420,6 +420,7 @@ losses_base2_rmse = []
 losses_base2_bf_rmse = []
 losses_cm_rmse = []
 losses_cm_bf_rmse = []
+losses_opq_bf_rmse = []
 losses_q_wrap_rmse = []
 losses_q_best_rmse = []
 
@@ -428,6 +429,7 @@ losses_base2_worst = []
 losses_base2_bf_worst = []
 losses_cm_worst = []
 losses_cm_bf_worst = []
+losses_opq_bf_worst = []
 losses_q_wrap_worst = []
 losses_q_best_worst = []
 
@@ -437,6 +439,7 @@ for e in epsilons:
     losses_base2_bf_e = np.load(file_path_base.format("baseline2", "best_fit", str(e)))
     losses_cm_e = np.load(file_path_base.format("coarse_mean", "wrap", str(e)))
     losses_cm_bf_e = np.load(file_path_base.format("coarse_mean", "best_fit", str(e)))
+    losses_opq_bf_e = np.load(file_path_base.format("optimized_quantiles", "best_fit", str(e)))
     losses_q_wrap_e = np.load(file_path_base.format("quantiles", "wrap", str(e)))
     losses_q_best_e = np.load(file_path_base.format("quantiles", "best_fit", str(e)))
 
@@ -446,6 +449,7 @@ for e in epsilons:
         losses_base2_bf_e,
         losses_cm_e,
         losses_cm_bf_e,
+        losses_opq_bf_e,
         losses_q_wrap_e,
         losses_q_best_e,
     ]
@@ -455,6 +459,7 @@ for e in epsilons:
         losses_base2_bf_rmse,
         losses_cm_rmse,
         losses_cm_bf_rmse,
+        losses_opq_bf_rmse,
         losses_q_wrap_rmse,
         losses_q_best_rmse,
     ]
@@ -464,6 +469,7 @@ for e in epsilons:
         losses_base2_bf_worst,
         losses_cm_worst,
         losses_cm_bf_worst,
+        losses_opq_bf_worst,
         losses_q_wrap_worst,
         losses_q_best_worst,
     ]
@@ -553,6 +559,8 @@ fig = get_subplots_nonSynthetic(
         losses_base2_bf_worst,
         losses_cm_worst,
         losses_cm_bf_worst,
+        losses_opq_bf_rmse,
+        losses_opq_bf_worst,
         losses_q_wrap_worst,
         losses_q_best_worst,
     ],
@@ -564,6 +572,7 @@ fig = get_subplots_nonSynthetic(
         "AAA + best",
         "Levy + wrap",
         "Levy + best",
+        "DAPaMean-MD optimized quantiles best",
         "DAPaMean-MD wrap",
         "DAPaMean-MD best",
     ],
