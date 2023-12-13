@@ -2,7 +2,7 @@
     "dataset" : "ITMS", 
     "data" : {
         "ITMS" : {
-            "Synthetic" : true,
+            "Synthetic" : false,
             "Synthetic Scaling" : "",
             "Synthetic Factor" : 10,
             "H3 Resolution" : 6,
@@ -27,6 +27,9 @@
             "lower_quantile" : 0.1
         },
         "baseline2" : {
+            "NA" : "NA"
+        },
+        "optimized_quantiles": {
             "NA" : "NA"
         }
     }
