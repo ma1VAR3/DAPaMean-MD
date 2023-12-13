@@ -61,7 +61,8 @@ def minimizer_quantiles(e, array_means):
     for eps in e:
         array_means_sorted = np.sort(array_means)
         print(len(array_means_sorted))
-        chosen_index = max(0 , (np.floor((2/eps))-1))
+        print(eps)
+        chosen_index = int(max(0 , (np.floor((2/eps))-1)))
         print(type(chosen_index))
         a_minimum.append(array_means_sorted[chosen_index])
         b_minimum.append(array_means_sorted[len(array_means_sorted) - chosen_index])
