@@ -181,8 +181,8 @@ def private_estimation(
         quantile_1, quantile_2 = minimizer_quantiles(epsilon_from_config, user_group_means)
         factor = 2 if groupping_algo == "wrap" else 1
 
-        q1 = np.minimum(q1_t, q2_t)
-        q2 = np.maximum(q1_t, q2_t)
+        q1 = np.minimum(quantile_1, quantile_2)
+        q2 = np.maximum(quantile_1, quantile_2)
         projected_vals = [
             np.clip(user_group_means, q1[i], q2[i]) for i in range(len(q1))
         ]
