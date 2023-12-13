@@ -1,7 +1,7 @@
 import math
 import os
 import numpy as np
-
+import json
 
 def get_left_right_counts(bins, values):
     left_counts = []
@@ -52,12 +52,15 @@ def private_quantile(vals, q, epsilon, ub, lb, num_vals, factor):
     return selected_quantile
 
 # call function with user_group_means
+with open("./config.json", "r") as jsonfile:
+        config = json.load(jsonfile)
+        epsilon_from_config = config["epsilons"]
 def minimizer_quantiles(e, array_means):
     a_minimum = []
     b_minimum = []
     for eps in e:
         array_means_sorted = np.sort(array_means)
-        chosen_index = np.floor((2/eps))
+        chosen_index = np.max(0 , (np.floor((2/eps))-1))
         a_minimum.append(array_means_sorted[chosen_index])
         b_minimum.append(array_means_sorted[len(array_means_sorted) - chosen_index])
     return a_minimum, b_minimum
@@ -171,7 +174,7 @@ def private_estimation(
         # np.save(file_base_q + 'random_losses.npy', random_losses)
     
     elif conc_algo == "optimized_quantiles":
-        quantile_1, quantile_2 = minimizer_quantiles(epsilon, user_group_means)
+        quantile_1, quantile_2 = minimizer_quantiles(epsilon_from_config, user_group_means)
         factor = 2 if groupping_algo == "wrap" else 1
 
         q1 = np.minimum(q1_t, q2_t)
