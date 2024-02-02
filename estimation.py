@@ -52,16 +52,9 @@ def private_quantile(vals, q, epsilon, ub, lb, num_vals, factor):
     return selected_quantile
 
 # call function with user_group_means
-
 def minimizer_quantiles(e, array_means):
     array_means_sorted = np.sort(array_means)
-    # print(len(array_means_sorted))
-    # print(eps)
     chosen_index = int(max(0 , (np.floor((2/e))-1)))
-    # print(type(chosen_index))
-    # a_minimum = (array_means_sorted[chosen_index])
-    # b_min_index = int(max(int(min(len(array_means_sorted)-chosen_index, (len(array_means_sorted)-1))),0))
-    # b_minimum.append(array_means_sorted[b_min_index])
     quantile_1 = (np.sum((array_means_sorted-(array_means_sorted[chosen_index])) <= 0))/len(array_means_sorted)
     quantile_2 = 1 - quantile_1
     return quantile_1, quantile_2

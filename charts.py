@@ -6,7 +6,7 @@ from dash import Dash, html, dcc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
-pio.renderers.default = "notebook"
+# pio.renderers.default = "notebook"
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
@@ -58,20 +58,41 @@ def get_subplots_nonSynthetic(
         #     yaxis_title=y_label,
         # ),
         xaxis_title=x_label,
-        yaxis_title=y_label,
-        title_text=title,
-        title_x=0.5,
+        yaxis_title=y_label
     )
+
+    # fsize = 100
+    # tsize = 14
+
+    # tdir = "in"
+
+    # major = 5.0
+    # minor = 3.0
+
+    # style = "default"
+
+    # plt.style.use(style)
+    # plt.rcParams["font.size"] = fsize
+    # plt.rcParams["legend.fontsize"] = 'x-large'
+    # plt.rcParams["xtick.direction"] = tdir
+    # plt.rcParams["ytick.direction"] = tdir
+    # plt.rcParams["xtick.major.size"] = major
+    # plt.rcParams["xtick.minor.size"] = minor
+    # plt.rcParams["ytick.major.size"] = major
+    # plt.rcParams["ytick.minor.size"] = minor
+    # plt.rcParams["text.usetex"] = True
+    
+
     # Create subplots
-    fig = make_subplots(rows=2, cols=1, 
-                        shared_xaxes=True,
-                        # shared_yaxes=True,
-                        horizontal_spacing=0.05, 
-                        vertical_spacing=0.06, 
-                        subplot_titles=("Non-Synthetic Data",
-                                        ""
-                                        )
-                        )
+    # fig = make_subplots(rows=1, cols=1, 
+    #                     # shared_xaxes=True,
+    #                     # shared_yaxes=True,
+    #                     # horizontal_spacing=0.05, 
+    #                     # vertical_spacing=0.01, 
+    #                     subplot_titles=("",
+    #                                     ""
+    #                     )
+    #                     )
 
 #for reference only, DO NOT UNCOMMENT
 # [
@@ -93,89 +114,94 @@ def get_subplots_nonSynthetic(
 
     #creating an array of y values 
     y = []
+    scaleFactorSynthetic = [0.1579, 0.1579, 0.1579, 0.1579, 0.1579]
+    scaleFactorNS = [1.579, 1.579, 1.579, 1.579, 1.579]
+    baselineMAENS = np.divide(scaleFactorNS, x_axis_data)
+    baselineMAESynthetic = np.divide(scaleFactorSynthetic,x_axis_data)
+    # print(baselineMAE)
     for i in y_axis_data:
         y.append(i)
     # print(y)
     # print(x_axis_data)
 
     # Add traces to the first subplot (RMSE)
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[1], 
-                             mode='lines+markers', 
-                             name='Array-Averaging',
-                             marker_color = 'green',
-                             marker_symbol=maks[0]),
-                row=1, col=1)  
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[3], 
-                             mode='lines+markers', 
-                             name='Levy Algorithm-based Clipping',
-                             marker_color = 'blue', 
-                             marker_symbol=maks[1]),
-                row=1, col=1)
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[5], 
-                             mode='lines+markers', 
-                             name='Quantile-based Clipping',
-                             marker_color = 'black', 
-                             marker_symbol=maks[2]),
-                row=1, col=1)
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[6], 
-                             mode='lines+markers', 
-                             name='Optimized Quantile-based Clipping',
-                             marker_color = 'orange', 
-                             marker_symbol=maks[3]),
-                row=1, col=1)
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[1], 
+    #                          mode='lines+markers', 
+    #                          name='Array-Averaging',
+    #                          marker_color = 'green',
+    #                          marker_symbol=maks[0]),
+    #             row=1, col=1)  
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[3], 
+    #                          mode='lines+markers', 
+    #                          name='Levy Algorithm-based Clipping',
+    #                          marker_color = 'blue', 
+    #                          marker_symbol=maks[1]),
+    #             row=1, col=1)
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[5], 
+    #                          mode='lines+markers', 
+    #                          name='Quantile-based Clipping',
+    #                          marker_color = 'black', 
+    #                          marker_symbol=maks[2]),
+    #             row=1, col=1)
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[6], 
+    #                          mode='lines+markers', 
+    #                          name='Optimized Quantile-based Clipping',
+    #                          marker_color = 'orange', 
+    #                          marker_symbol=maks[3]),
+    #             row=1, col=1)
 
     # Add a trace to the second subplot (MAE)
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=baselineMAESynthetic, 
+    #                          mode='lines+markers', 
+    #                          name=r'$\mathrm{BASELINE}$',
+    #                          marker_color = 'red',
+    #                         #  showlegend=False,
+    #                          marker_symbol=maks[4]))
     fig.add_trace(go.Scatter(x=x_axis_data, 
                              y=y[8], 
                              mode='lines+markers', 
-                             name='Array-Averaging',
+                             name=r'$\mathrm{ARRAY-AVERAGING}$',
                              marker_color = 'green',
-                             showlegend=False,
-                             marker_symbol=maks[0]),
-                row=2, col=1)
+                            #  showlegend=False,
+                             marker_symbol=maks[0]))
     fig.add_trace(go.Scatter(x=x_axis_data, 
                              y=y[10], 
                              mode='lines+markers', 
-                             name='Levy Algorithm-based Clipping',
+                             name=r'$\mathrm{LEVY}$',
                              marker_color = 'blue',
-                             showlegend=False,
-                             marker_symbol=maks[1]),
-                row=2, col=1)
+                            #  showlegend=False,
+                             marker_symbol=maks[1]))
     fig.add_trace(go.Scatter(x=x_axis_data, 
                              y=y[12], 
                              mode='lines+markers', 
-                             name='Quantile-based Clipping',
-                             marker_color = 'black', 
-                             showlegend = False,
-                             marker_symbol=maks[2]),
-                row=2, col=1)
+                             name=r'$\mathrm{FIXEDQUANTILE}$',
+                             marker_color = 'orange', 
+                            #  showlegend = False,
+                             marker_symbol=maks[2]))
     fig.add_trace(go.Scatter(x=x_axis_data, 
                              y=y[13], 
                              mode='lines+markers', 
-                             name='Optimized Quantile-based Clipping',
-                             marker_color = 'orange',
-                             showlegend=False,
-                             marker_symbol=maks[3]),
-                row=2, col=1)
-    
+                             name=r'$\varepsilon\mathrm{-DEPENDENTQUANTILE}$',
+                             marker_color = 'black',
+                            #  showlegend=False,
+                             marker_symbol=maks[3]))
     # Update subplot layout
-    # fig.update_xaxes(title_text='Epsilon', row=1, col=1)
-    fig.update_yaxes(title_text='RMSE', row=1, col=1)
-    fig.update_xaxes(title_text='Epsilon', row=2, col=1)
-    fig.update_yaxes(title_text='MAE', row=2, col=1)
+
+    fig.update_xaxes(title_font_size=18, title_text=r'$\Huge{\varepsilon}$', title_standoff = 18, automargin = False)
+    fig.update_yaxes(title_font_size=18, title_text=r'$\Large{\textrm{MAE}}$', title_standoff = 18, automargin = False)
 
     # Update the title of the entire figure
-    fig.update_layout(legend=dict(yanchor="top", y=1, xanchor="left", x=0.65),
-                      height=800, 
-                      width=800, 
-                      title_text='<b>Comparison of Concentration Algorithms w/ Best-Fit Grouping</b>',
-                      title_x=0.5)
+    fig.update_layout(legend=dict(yanchor="top", y=1, xanchor="right", x=1, font_size = 16,valign = 'middle', entrywidth = 0),
+                      height=700, 
+                      width=700,
+                      margin=dict(r=20, t=20))
 
-    # fig.show() 
+    # fig.show()
     return fig
 
 def get_subplots_SampleScaling(
@@ -306,7 +332,7 @@ def get_subplots_SampleScaling(
     fig.update_layout(legend=dict(yanchor="top", y=0.95, xanchor="left", x=0.7),
                       height=800, 
                       width=800, 
-                      title_text='<b>Comparison of Grouping Algorithms for Non-Synthetic Data</b>',
+                      title_text='<b>Comparison of Concentration Algorithms for Real-World ITMS Data</b>',
                       title_x=0.5)
 
     # fig.show() 
@@ -374,6 +400,7 @@ def get_figure(
     plt.rcParams["xtick.minor.size"] = minor
     plt.rcParams["ytick.major.size"] = major
     plt.rcParams["ytick.minor.size"] = minor
+    plt.rcParams["text.usetex"] = True
     ax = plt.gca()
     ax.xaxis.set_minor_locator(MultipleLocator(0.05))
     ax.yaxis.set_minor_locator(MultipleLocator(y_axis_tick))
@@ -426,11 +453,11 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results_nonSynthetic/{}/{}/{}/losses.npy"
+file_path_base = "./results_UserMedian/{}/{}/{}/losses.npy"
 conc_algos = ["baseline2", "coarse_mean", "optimized_quantiles", "quantiles"]
 epsilons = config["epsilons"]
-factor1 = 30
-factor2 = 22
+# factor1 = 30
+# factor2 = 22
 
 # losses_base_rmse = []
 losses_base2_rmse = []
@@ -504,7 +531,8 @@ for e in epsilons:
         # print(exp_perc)
         mean_perc = np.mean(exp_perc)
         store_array.append(mean_perc)
-
+    #     print(mean_perc)
+    # print(np.alen(store_array))
 
 # fig = get_figure(
 #     epsilons,
@@ -564,7 +592,7 @@ for e in epsilons:
 
 fig = get_subplots_nonSynthetic(
     epsilons,
-    "Epsilon",
+    "epsilon",
     [
         losses_base2_rmse,
         losses_base2_bf_rmse,
@@ -583,7 +611,7 @@ fig = get_subplots_nonSynthetic(
 
     ],
     "Error",
-    "Error vs Epsilon",
+    "",
     [
         # "Baseline",
         "AAA + wrap",
@@ -596,8 +624,8 @@ fig = get_subplots_nonSynthetic(
     ],
     legend_prefix="",
 )
+fig.write_image("figures/USMtest1.png")
 
-fig.write_image("results_nonSynthetic/plots/ConcentrationAlgoComparisonBestFit_withOptimizedQuantiles.png")
 
 
 
