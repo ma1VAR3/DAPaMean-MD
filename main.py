@@ -50,7 +50,12 @@ if __name__ == "__main__":
     # for group_algo in groupping_algos:
     print("-" * 20 + " Groupping Algo: {}".format(group_algo) + "-" * 20)
 
+    # m_values = [0, 0, 0, 0, 21, 254, 283, 321, 321, 341, 341, 341, 341, 341, 341, 341, 416, 416, 416, 416, 416, 416, 416, 416, 416, 416, 416, 416, 416, 416]
+    # m_values = [x+1 for x in m_values]
+    i = 0
+    
     for e in epsilons:
+        L_m = m_values[i]
         print("-" * 20 + " Epsilon: {}".format(e) + "-" * 20)
         exp_err = []
         for prog, d in zip(tqdm(range(len(dims))), dims):
@@ -64,7 +69,8 @@ if __name__ == "__main__":
                 data, metadata = load_data(preproc_data, config=config["data"][dataset])
                 # print("Init data loaded")
                 d_data = data[data["Dimension"] == d]
-                L = metadata[metadata["Dimension"] == d]["L"].values[0]
+                # L = metadata[metadata["Dimension"] == d]["L"].values[0]
+                L = L_m
                 array_template, K = get_weighted_mean_template(
                     d_data, L, config["user_groupping"]
                 )
@@ -143,14 +149,14 @@ if __name__ == "__main__":
                 # tot_end = time.time()
                 # print("One shot time: ", tot_end - tot_start)
             exp_err.append(np.array(dim_losses))
-
+        i+=1
         os.makedirs(
-            "./results/" + conc_algo + "/" + group_algo + "/" + str(e) + "/",
+            "./results_minimize/" + conc_algo + "/" + group_algo + "/" + str(e) + "/",
             exist_ok=True,
         )
 
         np.save(
-            "./results/"
+            "./results_minimize/"
             + conc_algo
             + "/"
             + group_algo
@@ -179,61 +185,61 @@ if __name__ == "__main__":
     #     data.to_csv("./data/dropped_data.csv")
     #     metadata.to_csv("./data/dropped_metadata.csv")
 
-    # if config["concentration_algorithm"] == "baseline":
-    #     for e in epsilons:
-    #         print("For epsilon: ", e)
-    #         exp_err = []
-    #         for prog, d in zip(tqdm(range(len(dims))), dims):
-    #             dim_losses = []
-    #             num_experiments = config["num_experiments"]
-    #             dataset = config["dataset"]
-    #             if config["data"][dataset]["Synthetic"] == False:
-    #                 data, metadata = load_data(preproc_data, config["data"][dataset])
-    #             for exp in range(num_experiments):
-    #                 if config["data"][dataset]["Synthetic"] == True:
-    #                     data, metadata = load_data(
-    #                         preproc_data, config["data"][dataset]
-    #                     )
-    #                 # for d in dims:
-    #                 d_data = data[data["Dimension"] == d]
-    #                 upper_bound = config["data"][dataset]["upper_bound"]
-    #                 lower_bound = config["data"][dataset]["lower_bound"]
-    #                 actual_mean = metadata[metadata["Dimension"] == d][
-    #                     "Actual Mean"
-    #                 ].values[0]
-    #                 dim_loss = baseline_estimation(
-    #                     d_data,
-    #                     upper_bound,
-    #                     lower_bound,
-    #                     e,
-    #                     actual_mean,
-    #                     1,
-    #                 )
-    #                 dim_losses.extend(dim_loss.tolist())
-    #             exp_err.append(np.array(dim_losses))
-    #             # print(sys.getsizeof(np.array(exp_err)))
-    #         os.makedirs(
-    #             "./results/"
-    #             + config["concentration_algorithm"]
-    #             + "/"
-    #             + config["user_groupping"]
-    #             + "/"
-    #             + str(e)
-    #             + "/",
-    #             exist_ok=True,
-    #         )
+    if config["concentration_algorithm"] == "baseline":
+        for e in epsilons:
+            print("For epsilon: ", e)
+            exp_err = []
+            for prog, d in zip(tqdm(range(len(dims))), dims):
+                dim_losses = []
+                num_experiments = config["num_experiments"]
+                dataset = config["dataset"]
+                if config["data"][dataset]["Synthetic"] == False:
+                    data, metadata = load_data(preproc_data, config["data"][dataset])
+                for exp in range(num_experiments):
+                    if config["data"][dataset]["Synthetic"] == True:
+                        data, metadata = load_data(
+                            preproc_data, config["data"][dataset]
+                        )
+                    # for d in dims:
+                    d_data = data[data["Dimension"] == d]
+                    upper_bound = config["data"][dataset]["upper_bound"]
+                    lower_bound = config["data"][dataset]["lower_bound"]
+                    actual_mean = metadata[metadata["Dimension"] == d][
+                        "Actual Mean"
+                    ].values[0]
+                    dim_loss = baseline_estimation(
+                        d_data,
+                        upper_bound,
+                        lower_bound,
+                        e,
+                        actual_mean,
+                        1,
+                    )
+                    dim_losses.extend(dim_loss.tolist())
+                exp_err.append(np.array(dim_losses))
+                # print(sys.getsizeof(np.array(exp_err)))
+            os.makedirs(
+                "./results/"
+                + config["concentration_algorithm"]
+                + "/"
+                + config["user_groupping"]
+                + "/"
+                + str(e)
+                + "/",
+                exist_ok=True,
+            )
 
-    #         np.save(
-    #             "./results/"
-    #             + config["concentration_algorithm"]
-    #             + "/"
-    #             + config["user_groupping"]
-    #             + "/"
-    #             + str(e)
-    #             + "/"
-    #             + "losses.npy",
-    #             exp_err,
-    #         )
+            np.save(
+                "./results/"
+                + config["concentration_algorithm"]
+                + "/"
+                + config["user_groupping"]
+                + "/"
+                + str(e)
+                + "/"
+                + "losses.npy",
+                exp_err,
+            )
 
     # else:
     #     for e in epsilons:

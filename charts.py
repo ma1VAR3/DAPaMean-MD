@@ -114,10 +114,10 @@ def get_subplots_nonSynthetic(
 
     #creating an array of y values 
     y = []
-    scaleFactorSynthetic = [0.1579, 0.1579, 0.1579, 0.1579, 0.1579]
-    scaleFactorNS = [1.579, 1.579, 1.579, 1.579, 1.579]
-    baselineMAENS = np.divide(scaleFactorNS, x_axis_data)
-    baselineMAESynthetic = np.divide(scaleFactorSynthetic,x_axis_data)
+    # scaleFactorSynthetic = [0.1579, 0.1579, 0.1579, 0.1579, 0.1579]
+    # scaleFactorNS = [1.579, 1.579, 1.579, 1.579, 1.579]
+    # baselineMAENS = np.divide(scaleFactorNS, x_axis_data)
+    # baselineMAESynthetic = np.divide(scaleFactorSynthetic,x_axis_data)
     # print(baselineMAE)
     for i in y_axis_data:
         y.append(i)
@@ -163,33 +163,33 @@ def get_subplots_nonSynthetic(
     #                         #  showlegend=False,
     #                          marker_symbol=maks[4]))
     fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[8], 
+                             y=y[0], 
                              mode='lines+markers', 
-                             name=r'$\mathrm{ARRAY-AVERAGING}$',
+                             name=r'$\mathrm{B2}$',
                              marker_color = 'green',
                             #  showlegend=False,
                              marker_symbol=maks[0]))
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[10], 
-                             mode='lines+markers', 
-                             name=r'$\mathrm{LEVY}$',
-                             marker_color = 'blue',
-                            #  showlegend=False,
-                             marker_symbol=maks[1]))
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[12], 
-                             mode='lines+markers', 
-                             name=r'$\mathrm{FIXEDQUANTILE}$',
-                             marker_color = 'orange', 
-                            #  showlegend = False,
-                             marker_symbol=maks[2]))
-    fig.add_trace(go.Scatter(x=x_axis_data, 
-                             y=y[13], 
-                             mode='lines+markers', 
-                             name=r'$\varepsilon\mathrm{-DEPENDENTQUANTILE}$',
-                             marker_color = 'black',
-                            #  showlegend=False,
-                             marker_symbol=maks[3]))
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[10], 
+    #                          mode='lines+markers', 
+    #                          name=r'$\mathrm{LEVY}$',
+    #                          marker_color = 'blue',
+    #                         #  showlegend=False,
+    #                          marker_symbol=maks[1]))
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[12], 
+    #                          mode='lines+markers', 
+    #                          name=r'$\mathrm{FIXEDQUANTILE}$',
+    #                          marker_color = 'orange', 
+    #                         #  showlegend = False,
+    #                          marker_symbol=maks[2]))
+    # fig.add_trace(go.Scatter(x=x_axis_data, 
+    #                          y=y[13], 
+    #                          mode='lines+markers', 
+    #                          name=r'$\varepsilon\mathrm{-DEPENDENTQUANTILE}$',
+    #                          marker_color = 'black',
+    #                         #  showlegend=False,
+    #                          marker_symbol=maks[3]))
     # Update subplot layout
 
     fig.update_xaxes(title_font_size=18, title_text=r'$\Huge{\varepsilon}$', title_standoff = 18, automargin = False)
@@ -453,69 +453,70 @@ with open("./config.json", "r") as jsonfile:
     print("Configurations loaded from config.json")
     jsonfile.close()
 
-file_path_base = "./results_UserMedian/{}/{}/{}/losses.npy"
-conc_algos = ["baseline2", "coarse_mean", "optimized_quantiles", "quantiles"]
+file_path_base = "./results_minimize/{}/{}/{}/losses.npy"
+# conc_algos = ["baseline2", "coarse_mean", "optimized_quantiles", "quantiles"]
+conc_algos = ["baseline2"]
 epsilons = config["epsilons"]
 # factor1 = 30
 # factor2 = 22
 
 # losses_base_rmse = []
-losses_base2_rmse = []
+# losses_base2_rmse = []
 losses_base2_bf_rmse = []
-losses_cm_rmse = []
-losses_cm_bf_rmse = []
-losses_opq_bf_rmse = []
-losses_q_wrap_rmse = []
-losses_q_best_rmse = []
+# losses_cm_rmse = []
+# losses_cm_bf_rmse = []
+# losses_opq_bf_rmse = []
+# losses_q_wrap_rmse = []
+# losses_q_best_rmse = []
 
 # losses_base_worst = []
-losses_base2_worst = []
+# losses_base2_worst = []
 losses_base2_bf_worst = []
-losses_cm_worst = []
-losses_cm_bf_worst = []
-losses_opq_bf_worst = []
-losses_q_wrap_worst = []
-losses_q_best_worst = []
+# losses_cm_worst = []
+# losses_cm_bf_worst = []
+# losses_opq_bf_worst = []
+# losses_q_wrap_worst = []
+# losses_q_best_worst = []
 
 for e in epsilons:
     # losses_base_e = np.load(file_path_base.format("baseline", "wrap", str(e)))
-    losses_base2_e = np.load(file_path_base.format("baseline2", "wrap", str(e)))
+    # losses_base2_e = np.load(file_path_base.format("baseline2", "wrap", str(e)))
     losses_base2_bf_e = np.load(file_path_base.format("baseline2", "best_fit", str(e)))
-    losses_cm_e = np.load(file_path_base.format("coarse_mean", "wrap", str(e)))
-    losses_cm_bf_e = np.load(file_path_base.format("coarse_mean", "best_fit", str(e)))
-    losses_opq_bf_e = np.load(file_path_base.format("optimized_quantiles", "best_fit", str(e)))
-    losses_q_wrap_e = np.load(file_path_base.format("quantiles", "wrap", str(e)))
-    losses_q_best_e = np.load(file_path_base.format("quantiles", "best_fit", str(e)))
+    # losses_cm_e = np.load(file_path_base.format("coarse_mean", "wrap", str(e)))
+    # losses_cm_bf_e = np.load(file_path_base.format("coarse_mean", "best_fit", str(e)))
+    # losses_opq_bf_e = np.load(file_path_base.format("optimized_quantiles", "best_fit", str(e)))
+    # losses_q_wrap_e = np.load(file_path_base.format("quantiles", "wrap", str(e)))
+    # losses_q_best_e = np.load(file_path_base.format("quantiles", "best_fit", str(e)))
 
     loaded_set = [
         # losses_base_e,
-        losses_base2_e,
-        losses_base2_bf_e,
-        losses_cm_e,
-        losses_cm_bf_e,
-        losses_opq_bf_e,
-        losses_q_wrap_e,
-        losses_q_best_e,
+        # losses_base2_e,
+        losses_base2_bf_e
+        # losses_cm_e,
+        # losses_cm_bf_e,
+        # losses_opq_bf_e,
+        # losses_q_wrap_e,
+        # losses_q_best_e,
     ]
     store_set_rmse = [
         # losses_base_rmse,
-        losses_base2_rmse,
-        losses_base2_bf_rmse,
-        losses_cm_rmse,
-        losses_cm_bf_rmse,
-        losses_opq_bf_rmse,
-        losses_q_wrap_rmse,
-        losses_q_best_rmse,
+        # losses_base2_rmse,
+        losses_base2_bf_rmse
+        # losses_cm_rmse,
+        # losses_cm_bf_rmse,
+        # losses_opq_bf_rmse,
+        # losses_q_wrap_rmse,
+        # losses_q_best_rmse,
     ]
     store_set_worst = [
-        # losses_base_worst,
-        losses_base2_worst,
-        losses_base2_bf_worst,
-        losses_cm_worst,
-        losses_cm_bf_worst,
-        losses_opq_bf_worst,
-        losses_q_wrap_worst,
-        losses_q_best_worst,
+        # # losses_base_worst,
+        # losses_base2_worst,
+        losses_base2_bf_worst
+        # losses_cm_worst,
+        # losses_cm_bf_worst,
+        # losses_opq_bf_worst,
+        # losses_q_wrap_worst,
+        # losses_q_best_worst,
     ]
 
     for loaded_loss, store_array in zip(loaded_set, store_set_rmse):
@@ -594,20 +595,20 @@ fig = get_subplots_nonSynthetic(
     epsilons,
     "epsilon",
     [
-        losses_base2_rmse,
+        # losses_base2_rmse,
         losses_base2_bf_rmse,
-        losses_cm_rmse,
-        losses_cm_bf_rmse,
-        losses_q_wrap_rmse,
-        losses_q_best_rmse,
-        losses_opq_bf_rmse,
-        losses_base2_worst,
-        losses_base2_bf_worst,
-        losses_cm_worst,
-        losses_cm_bf_worst,
-        losses_q_wrap_worst,
-        losses_q_best_worst,
-        losses_opq_bf_worst,
+        # losses_cm_rmse,
+        # losses_cm_bf_rmse,
+        # losses_q_wrap_rmse,
+        # losses_q_best_rmse,
+        # losses_opq_bf_rmse,
+        # losses_base2_worst,
+        losses_base2_bf_worst
+        # losses_cm_worst,
+        # losses_cm_bf_worst,
+        # losses_q_wrap_worst,
+        # losses_q_best_worst,
+        # losses_opq_bf_worst,
 
     ],
     "Error",
@@ -624,7 +625,7 @@ fig = get_subplots_nonSynthetic(
     ],
     legend_prefix="",
 )
-fig.write_image("figures/USMtest1.png")
+fig.write_image("figures/Minimizetest1.png")
 
 
 

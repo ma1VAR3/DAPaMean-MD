@@ -201,6 +201,25 @@ def private_estimation(
         final_estimates = np.clip(final_estimates, lb, ub)
         losses = np.abs(final_estimates - actual_mean)
         return losses
+    
+    # L = 
+    if conc_algo == "baseline2_low":
+        factor = 2 if groupping_algo == "wrap" else 1
+        coarse_mean = np.mean(user_group_means)
+        noise_baseline2 = np.random.laplace(0, (((ub - lb) * factor) / (K * epsilon)), num_exp)
+        final_estimates = coarse_mean + noise_baseline2
+        final_estimates = np.clip(final_estimates, lb, ub)
+        losses = np.abs(final_estimates - actual_mean)
+        return losses
+    
+    if conc_algo == "baseline2_up":
+        factor = 2 if groupping_algo == "wrap" else 1
+        coarse_mean = np.mean(user_group_means)
+        noise_baseline2 = np.random.laplace(0, (((ub - lb) * factor) / (K * epsilon)), num_exp)
+        final_estimates = coarse_mean + noise_baseline2
+        final_estimates = np.clip(final_estimates, lb, ub)
+        losses = np.abs(final_estimates - actual_mean)
+        return losses
 
 
 def baseline_estimation(data, ub, lb, e, actual_mean, num_exp):

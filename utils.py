@@ -8,7 +8,6 @@ import h3
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-
 def std_preproc_itms(config):
     df = pd.read_csv("./data/suratITMSDPtest.csv")
     df = df.drop_duplicates(
@@ -85,7 +84,7 @@ def generate_metadata(data):
     actual_mean_vals = []
     for d in dims:
         dim_data = data[data["Dimension"] == d]
-        dim_l = calc_user_array_length(dim_data)
+        dim_l = calc_user_array_length(dim_data, "median")
         l_vals.append(dim_l)
         dim_k = calc_k(dim_data, dim_l)
         k_vals.append(dim_k)
@@ -175,6 +174,8 @@ def synthesize_perdim_scale_samples(data, config):
         dim_samples = dim_data["Value"].values
         mean = np.mean(dim_samples)
         std = np.std(dim_samples)
+        print("mean:", mean)
+        print("std:", std)
         dim_users = dim_data["User"].unique()
         num_dim_samples = len(dim_samples) * config["Synthetic Factor"]
         start = time.time()
@@ -405,7 +406,6 @@ def optimize_me(user_contribs, start, end, step=1):
             f_val = val
             l_opt = l
     return l_opt
-
 
 def calc_user_array_length(data, type="opt"):
     L = None
