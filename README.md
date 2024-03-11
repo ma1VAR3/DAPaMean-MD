@@ -1,8 +1,6 @@
-# DAPaMean-SD only
+# DAPaMean
 
-#### Please forgive
-
-I know I have misspelled grouping as groupping in multiple places, please bear it. Also lot of names given to the parameters/functions might not make sense. Thank you for your patience and best of luck!
+The paper on this research is live on arXiv: https://arxiv.org/abs/2401.15906
 
 ### Docs
 
